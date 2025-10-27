@@ -1,24 +1,12 @@
-import { useAppState } from './context/GlobalStateContext';
-import { useAuth } from './context/AuthContext';
-import LoginPage from './pages/LoginPage';
-import DashboardPage from './pages/DashboardPage';
+import AppRouter from './router/AppRouter';
 import './App.css'
 
 /**
  * Componente principal de la aplicación
- * Implementa control de acceso basado en autenticación
+ * Renderiza el router con todas las rutas
  */
 function App() {
-  const { state } = useAppState();
-  const { isAuthenticated } = useAuth();
-
-  // Si no hay usuario autenticado, muestra LoginPage
-  if (!isAuthenticated) {
-    return <LoginPage />;
-  }
-
-  // Si hay usuario autenticado, muestra DashboardPage
-  return <DashboardPage />;
+  return <AppRouter />;
 }
 
 export default App

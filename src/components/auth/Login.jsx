@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import './Login.css';
 
@@ -7,6 +8,7 @@ import './Login.css';
  * Permite a los usuarios autenticarse en el sistema
  */
 const Login = () => {
+  const navigate = useNavigate();
   const { login, loading, error } = useAuth();
   
   // Estados del formulario
@@ -26,6 +28,9 @@ const Login = () => {
       // Limpiar el formulario
       setEmail('');
       setPassword('');
+      
+      // Redirigir al dashboard después de login exitoso
+      navigate('/dashboard');
     } catch (err) {
       // Los errores se manejan en AuthContext
       console.error('Error en login:', err);
