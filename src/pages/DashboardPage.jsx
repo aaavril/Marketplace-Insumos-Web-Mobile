@@ -1,4 +1,5 @@
 import { useAppState } from '../context/GlobalStateContext';
+import { useAuth } from '../context/AuthContext';
 import RoleDashboard from '../components/dashboard/RoleDashboard';
 import './DashboardPage.css';
 
@@ -6,13 +7,14 @@ import './DashboardPage.css';
  * DashboardPage - Página principal para usuarios autenticados
  */
 const DashboardPage = () => {
-  const { state, dispatch } = useAppState();
+  const { state } = useAppState();
+  const { logout } = useAuth();
 
   /**
    * Maneja el cierre de sesión
    */
-  const handleLogout = () => {
-    dispatch({ type: 'LOGOUT' });
+  const handleLogout = async () => {
+    await logout();
   };
 
   return (

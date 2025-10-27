@@ -1,7 +1,6 @@
-import { createContext, useContext } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { useAppState } from './GlobalStateContext';
 import { login as authLogin, logout as authLogout } from '../services/AuthService';
-import { useState } from 'react';
 
 /**
  * Context para autenticación
@@ -19,6 +18,22 @@ export const AuthProvider = ({ children }) => {
   const [authError, setAuthError] = useState(null);
 
   /**
+   * Carga el usuario guardado en localStorage al iniciar
+   */
+  useEffect(() => {
+    const savedUser = localStorage.getItem('currentUser');
+    if (savedUser) {
+      try {
+        const user = JSON.parse(savedUser);
+        dispatch({ type: 'SET_CURRENT_USER', payload: user });
+      } catch (err) {
+        console.error('Error al cargar usuario:', err);
+        localStorage.removeItem('currentUser');
+      }
+    }
+  }, [dispatch]);
+
+  /**
    * Realiza el login del usuario
    */
   const login = async (email, password) => {
@@ -27,6 +42,10 @@ export const AuthProvider = ({ children }) => {
 
     try {
       const userData = await authLogin(email, password);
+      
+      // Guarda el usuario en localStorage
+      localStorage.setItem('currentUser', JSON.stringify(userData));
+      
       dispatch({ type: 'SET_CURRENT_USER', payload: userData });
       return userData;
     } catch (err) {
@@ -44,6 +63,10 @@ export const AuthProvider = ({ children }) => {
     setAuthLoading(true);
     try {
       await authLogout();
+      
+      // Elimina el usuario de localStorage
+      localStorage.removeItem('currentUser');
+      
       dispatch({ type: 'LOGOUT' });
       setAuthError(null);
     } catch (err) {

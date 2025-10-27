@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { useAppState } from '../../context/GlobalStateContext';
-import { login as authLogin } from '../../services/AuthService';
+import { useAuth } from '../../context/AuthContext';
 import './Login.css';
 
 /**
@@ -8,42 +7,28 @@ import './Login.css';
  * Permite a los usuarios autenticarse en el sistema
  */
 const Login = () => {
-  const { dispatch } = useAppState();
+  const { login, loading, error } = useAuth();
   
   // Estados del formulario
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
   /**
    * Maneja el envío del formulario de login
    */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Limpia errores previos
-    setError('');
-    setLoading(true);
 
     try {
-      // Llama al servicio de autenticación
-      const userObject = await authLogin(email, password);
+      // Llama al AuthContext para hacer login
+      await login(email, password);
       
-      // Despacha la acción para establecer el usuario actual
-      dispatch({
-        type: 'SET_CURRENT_USER',
-        payload: userObject
-      });
-      
-      // Opcional: Limpiar el formulario
+      // Limpiar el formulario
       setEmail('');
       setPassword('');
     } catch (err) {
-      // Maneja errores de autenticación
-      setError(err.message);
-    } finally {
-      setLoading(false);
+      // Los errores se manejan en AuthContext
+      console.error('Error en login:', err);
     }
   };
 
@@ -53,7 +38,6 @@ const Login = () => {
   const fillTestCredentials = (testEmail) => {
     setEmail(testEmail);
     setPassword('123');
-    setError('');
   };
 
   return (

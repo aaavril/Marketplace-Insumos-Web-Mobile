@@ -1,4 +1,5 @@
 import { useAppState } from './context/GlobalStateContext';
+import { useAuth } from './context/AuthContext';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import './App.css'
@@ -9,9 +10,10 @@ import './App.css'
  */
 function App() {
   const { state } = useAppState();
+  const { isAuthenticated } = useAuth();
 
   // Si no hay usuario autenticado, muestra LoginPage
-  if (!state.currentUser) {
+  if (!isAuthenticated) {
     return <LoginPage />;
   }
 
