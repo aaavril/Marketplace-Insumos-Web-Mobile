@@ -34,6 +34,14 @@ const DashboardPage = () => {
         {/* Dashboard específico por rol - Control de Acceso (F1.HU3) */}
         <RoleDashboard />
 
+        {/* Vista para otros roles (Proveedores) */}
+        {state.currentUser?.role !== 'Solicitante' && (
+          <section className="info-card">
+            <h2>Bienvenido, {state.currentUser?.name}</h2>
+            <p>La vista para {state.currentUser?.role} se implementará próximamente.</p>
+          </section>
+        )}
+
         {/* Panel de estadísticas generales */}
         <section className="info-card">
           <h2>Estadísticas Generales</h2>

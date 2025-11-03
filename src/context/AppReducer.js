@@ -31,8 +31,18 @@ export const AppReducer = (state, action) => {
       };
 
     // ==================== SERVICIOS ====================
+    
+    /**
+     * ADD_SERVICE - Agrega un nuevo servicio al estado
+     * payload: Object - Objeto Service completo con todos sus campos
+     */
+    case 'ADD_SERVICE':
+      return {
+        ...state,
+        services: [...state.services, action.payload]
+      };
+    
     // Acciones futuras a implementar:
-    // - ADD_SERVICE: Agregar nuevo servicio
     // - UPDATE_SERVICE: Actualizar servicio existente
     // - DELETE_SERVICE: Eliminar servicio
     

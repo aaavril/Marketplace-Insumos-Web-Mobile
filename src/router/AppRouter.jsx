@@ -3,6 +3,7 @@ import PublicRoute from '../components/routing/PublicRoute';
 import ProtectedRoute from '../components/routing/ProtectedRoute';
 import LoginPage from '../pages/LoginPage';
 import DashboardPage from '../pages/DashboardPage';
+import CreateServicePage from '../pages/CreateServicePage';
 import NotFoundPage from '../pages/NotFoundPage';
 
 /**
@@ -39,6 +40,15 @@ const AppRouter = () => {
           element={
             <ProtectedRoute>
               <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/services/create"
+          element={
+            <ProtectedRoute>
+              <CreateServicePage />
             </ProtectedRoute>
           }
         />

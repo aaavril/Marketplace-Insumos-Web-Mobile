@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { useAppState } from '../../context/GlobalStateContext';
 import './RoleDashboard.css';
 
@@ -7,10 +8,10 @@ import './RoleDashboard.css';
  */
 const SolicitanteDashboard = () => {
   const { state, dispatch } = useAppState();
+  const navigate = useNavigate();
 
   const handlePublicarServicio = () => {
-    // TODO: Implementar modal/formulario para publicar servicio
-    alert('Funcionalidad: Publicar Solicitud de Servicio - Próximamente');
+    navigate('/services/create');
   };
 
   const handleVerProveedores = () => {
@@ -44,12 +45,32 @@ const SolicitanteDashboard = () => {
       <div className="dashboard-content">
         <div className="content-section">
           <h3>Mis Solicitudes Activas</h3>
-          <div className="empty-state">
-            <p>No tienes solicitudes activas</p>
-            <button onClick={handlePublicarServicio} className="link-btn">
-              Crear tu primera solicitud
-            </button>
-          </div>
+          {state.services.filter(s => s.solicitanteId === state.currentUser.id).length > 0 ? (
+            <div className="services-list">
+              {state.services
+                .filter(s => s.solicitanteId === state.currentUser.id)
+                .map(service => (
+                  <div key={service.id} className="service-item">
+                    <h4>{service.title}</h4>
+                    <p>{service.description}</p>
+                    <div className="service-meta">
+                      <span>📍 {service.location}</span>
+                      <span>📅 {service.date}</span>
+                      <span className={`status-badge ${service.status.toLowerCase()}`}>
+                        {service.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          ) : (
+            <div className="empty-state">
+              <p>No tienes solicitudes activas</p>
+              <button onClick={handlePublicarServicio} className="link-btn">
+                Crear tu primera solicitud
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="content-section">
