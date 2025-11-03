@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import ServiceForm from '../components/services/ServiceForm';
+import ServiceForm from '../components/ServiceForm';
 import './CreateServicePage.css';
 
 /**
