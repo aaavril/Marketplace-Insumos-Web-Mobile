@@ -6,19 +6,61 @@ import './ServiceForm.css';
 /**
  * ServiceForm - Formulario para publicar un nuevo servicio
  * Permite a los Solicitantes crear solicitudes de servicio
+ * F2.HU2: Incluye lista dinámica de insumos requeridos
  */
 const ServiceForm = () => {
   const navigate = useNavigate();
   const { state, dispatch } = useAppState();
+  
+  // Estructura de un insumo (Supply)
+  const createEmptySupply = () => ({
+    id: Date.now() + Math.random(), // ID único
+    name: '',
+    quantity: '',
+    unit: ''
+  });
   
   // Estados del formulario
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
   const [date, setDate] = useState('');
+  const [requiredSupplies, setRequiredSupplies] = useState([createEmptySupply()]);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+
+  /**
+   * Agrega un nuevo insumo vacío a la lista
+   */
+  const handleAddSupply = () => {
+    setRequiredSupplies([...requiredSupplies, createEmptySupply()]);
+  };
+
+  /**
+   * Elimina un insumo de la lista por su ID
+   * @param {string|number} id - ID del insumo a eliminar
+   */
+  const handleRemoveSupply = (id) => {
+    // No permitir eliminar si solo hay un insumo
+    if (requiredSupplies.length > 1) {
+      setRequiredSupplies(requiredSupplies.filter(supply => supply.id !== id));
+    }
+  };
+
+  /**
+   * Actualiza un campo específico de un insumo
+   * @param {string|number} id - ID del insumo a actualizar
+   * @param {string} field - Campo a actualizar ('name', 'quantity', o 'unit')
+   * @param {string} value - Nuevo valor del campo
+   */
+  const handleSupplyChange = (id, field, value) => {
+    setRequiredSupplies(
+      requiredSupplies.map(supply =>
+        supply.id === id ? { ...supply, [field]: value } : supply
+      )
+    );
+  };
 
   /**
    * Maneja el envío del formulario
@@ -38,7 +80,7 @@ const ServiceForm = () => {
         location,
         date,
         status: 'Publicado', // Estado inicial (Regla de Negocio)
-        requiredSupplies: [], // Se implementará en F2.HU2
+        requiredSupplies: requiredSupplies.filter(s => s.name.trim() !== ''), // F2.HU2: Filtrar insumos vacíos
         quotes: [],
         supplyOffers: [],
         solicitanteId: state.currentUser.id // Vinculación con el creador
@@ -52,6 +94,7 @@ const ServiceForm = () => {
       setDescription('');
       setLocation('');
       setDate('');
+      setRequiredSupplies([createEmptySupply()]);
 
       // Mostrar mensaje de éxito y navegar al dashboard
       setSuccess(true);
@@ -134,6 +177,89 @@ const ServiceForm = () => {
               disabled={loading}
               min={new Date().toISOString().split('T')[0]}
             />
+          </div>
+
+          {/* F2.HU2: Lista dinámica de insumos requeridos */}
+          <div className="form-group supplies-section">
+            <div className="supplies-header">
+              <label>Insumos Requeridos</label>
+              <button
+                type="button"
+                onClick={handleAddSupply}
+                className="btn-add-supply"
+                disabled={loading}
+              >
+                + Agregar Insumo
+              </button>
+            </div>
+            
+            <div className="supplies-list">
+              {requiredSupplies.map((supply, index) => (
+                <div key={supply.id} className="supply-item">
+                  <div className="supply-inputs">
+                    <div className="supply-field supply-name">
+                      <label htmlFor={`supply-name-${supply.id}`}>
+                        Nombre del Insumo
+                      </label>
+                      <input
+                        id={`supply-name-${supply.id}`}
+                        type="text"
+                        value={supply.name}
+                        onChange={(e) => handleSupplyChange(supply.id, 'name', e.target.value)}
+                        placeholder="Ej: Cemento, Pintura, etc."
+                        disabled={loading}
+                      />
+                    </div>
+                    
+                    <div className="supply-field supply-quantity">
+                      <label htmlFor={`supply-quantity-${supply.id}`}>
+                        Cantidad
+                      </label>
+                      <input
+                        id={`supply-quantity-${supply.id}`}
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={supply.quantity}
+                        onChange={(e) => handleSupplyChange(supply.id, 'quantity', e.target.value)}
+                        placeholder="0"
+                        disabled={loading}
+                      />
+                    </div>
+                    
+                    <div className="supply-field supply-unit">
+                      <label htmlFor={`supply-unit-${supply.id}`}>
+                        Unidad
+                      </label>
+                      <input
+                        id={`supply-unit-${supply.id}`}
+                        type="text"
+                        value={supply.unit}
+                        onChange={(e) => handleSupplyChange(supply.id, 'unit', e.target.value)}
+                        placeholder="kg, litros, unidades..."
+                        disabled={loading}
+                      />
+                    </div>
+                  </div>
+                  
+                  {requiredSupplies.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveSupply(supply.id)}
+                      className="btn-remove-supply"
+                      disabled={loading}
+                      aria-label="Eliminar insumo"
+                    >
+                      ✕ Eliminar
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+            
+            <p className="supplies-hint">
+              Agrega los insumos que necesitas para realizar el servicio. Los campos vacíos no se guardarán.
+            </p>
           </div>
 
           <button
