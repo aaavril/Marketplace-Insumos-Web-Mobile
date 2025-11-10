@@ -1,3 +1,5 @@
+import { MOCK_SERVICES } from './mockServices';
+
 /**
  * Mock Users - Datos de prueba para el MVP
  * Roles disponibles: 'Solicitante', 'Proveedor de Servicio', 'Proveedor de Insumos'
@@ -29,12 +31,15 @@ export const MOCK_USERS = [
 /**
  * Estado inicial de la aplicación
  * Contiene todas las entidades principales del modelo de datos
+ * 
+ * NOTA: MOCK_SERVICES se incluyen para desarrollo y pruebas
+ * En producción, services iniciaría como un array vacío []
  */
 export const initialState = {
-  services: [],           // Servicios publicados por proveedores
-  users: MOCK_USERS,      // Usuarios del sistema
-  currentUser: null,      // Usuario actualmente autenticado
-  quotes: [],             // Cotizaciones realizadas
-  supplyOffers: []        // Ofertas de insumos disponibles
+  services: MOCK_SERVICES,  // Servicios publicados (mock para desarrollo)
+  users: MOCK_USERS,         // Usuarios del sistema
+  currentUser: null,         // Usuario actualmente autenticado
+  quotes: [],                // Cotizaciones realizadas
+  supplyOffers: []           // Ofertas de insumos disponibles
 };
 

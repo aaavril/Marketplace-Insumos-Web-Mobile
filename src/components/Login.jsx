@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import './Login.css';
 
 /**
@@ -49,8 +49,11 @@ const Login = () => {
     <div className="login-container">
       <div className="login-card">
         <div className="login-header">
-          <h1>Marketplace de Servicios</h1>
-          <p>Inicia sesión para continuar</p>
+          <div className="login-logo">
+            <h1>Market del Este</h1>
+            <p className="logo-subtitle">Marketplace de Punta del Este</p>
+          </div>
+          <p className="login-subtitle">Inicia sesión para continuar</p>
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">
@@ -94,6 +97,15 @@ const Login = () => {
             {loading ? 'Ingresando...' : 'Ingresar'}
           </button>
         </form>
+
+        <div className="login-footer">
+          <p>
+            ¿No tienes una cuenta?{' '}
+            <Link to="/signup" className="signup-link">
+              Regístrate aquí
+            </Link>
+          </p>
+        </div>
 
         <div className="test-credentials">
           <p className="test-title">Usuarios de Prueba:</p>

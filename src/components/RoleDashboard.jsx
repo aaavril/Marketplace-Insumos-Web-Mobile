@@ -23,7 +23,7 @@ const SolicitanteDashboard = () => {
     <div className="role-dashboard">
       <div className="dashboard-header">
         <h2>Dashboard Solicitante</h2>
-        <p>Gestiona tus solicitudes de servicio</p>
+        <p>Gestiona tus solicitudes de servicio en Market del Este</p>
       </div>
 
       <div className="dashboard-actions">
@@ -90,10 +90,10 @@ const SolicitanteDashboard = () => {
  */
 const ProveedorServicioDashboard = () => {
   const { state, dispatch } = useAppState();
+  const navigate = useNavigate();
 
   const handleVerServicios = () => {
-    // TODO: Implementar listado de servicios publicados
-    alert('Funcionalidad: Ver Servicios Publicados - Próximamente');
+    navigate('/services');
   };
 
   const handleGestionarServicios = () => {
@@ -105,7 +105,7 @@ const ProveedorServicioDashboard = () => {
     <div className="role-dashboard">
       <div className="dashboard-header">
         <h2>Dashboard Proveedor de Servicio</h2>
-        <p>Gestiona tus servicios y cotizaciones</p>
+        <p>Gestiona tus servicios y cotizaciones en Market del Este</p>
       </div>
 
       <div className="dashboard-actions">
@@ -167,7 +167,7 @@ const ProveedorInsumosDashboard = () => {
     <div className="role-dashboard">
       <div className="dashboard-header">
         <h2>Dashboard Proveedor de Insumos</h2>
-        <p>Gestiona tu inventario y ofertas</p>
+        <p>Gestiona tu inventario y ofertas en Market del Este</p>
       </div>
 
       <div className="dashboard-actions">

@@ -1,19 +1,22 @@
 import { useNavigate } from 'react-router-dom';
-import ServiceForm from '../components/ServiceForm';
-import './CreateServicePage.css';
+import { useAuth } from '../context/AuthContext';
+import ServiceList from '../components/ServiceList';
+import './ServicesListPage.css';
 
 /**
- * CreateServicePage - Página para crear una nueva solicitud de servicio
+ * ServicesListPage - Página que muestra la lista de servicios publicados
+ * Para Proveedores de Servicio
  */
-const CreateServicePage = () => {
+const ServicesListPage = () => {
   const navigate = useNavigate();
+  const { getUserRole } = useAuth();
 
   const handleBack = () => {
     navigate('/dashboard');
   };
 
   return (
-    <div className="create-service-page">
+    <div className="services-list-page">
       <div className="page-header">
         <div className="header-top">
           <button onClick={handleBack} className="btn-back">
@@ -24,17 +27,16 @@ const CreateServicePage = () => {
           </div>
         </div>
         <div className="header-content">
-          <h1>Crear Nueva Solicitud de Servicio</h1>
-          <p className="page-description">
-            Publica tu necesidad de servicio o insumos en Punta del Este
+          <h1>Servicios Publicados</h1>
+          <p className="page-subtitle">
+            Explora los servicios disponibles en Punta del Este y decide cuál cotizar
           </p>
         </div>
       </div>
-      <ServiceForm />
+      <ServiceList />
     </div>
   );
 };
 
-export default CreateServicePage;
-
+export default ServicesListPage;
 

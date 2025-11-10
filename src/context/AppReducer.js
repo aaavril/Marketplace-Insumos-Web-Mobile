@@ -30,6 +30,18 @@ export const AppReducer = (state, action) => {
         currentUser: null
       };
 
+    // ==================== USUARIOS ====================
+    
+    /**
+     * ADD_USER - Agrega un nuevo usuario al estado
+     * payload: Object - Objeto User completo con todos sus campos
+     */
+    case 'ADD_USER':
+      return {
+        ...state,
+        users: [...state.users, action.payload]
+      };
+
     // ==================== SERVICIOS ====================
     
     /**

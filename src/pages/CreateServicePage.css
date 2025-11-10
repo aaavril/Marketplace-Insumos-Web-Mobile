@@ -11,11 +11,39 @@
   margin-bottom: 2rem;
 }
 
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.page-brand {
+  display: flex;
+  align-items: center;
+}
+
+.brand-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: white;
+}
+
+.header-content {
+  margin-top: 1rem;
+}
+
 .page-header h1 {
   color: white;
   font-size: 2rem;
-  margin-top: 1rem;
+  margin-bottom: 0.5rem;
   font-weight: 700;
+}
+
+.page-description {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+  margin: 0;
 }
 
 .btn-back {

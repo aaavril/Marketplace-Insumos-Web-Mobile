@@ -112,7 +112,10 @@ const ServiceForm = () => {
   return (
     <div className="service-form-container">
       <div className="service-form-card">
-        <h2>Publicar Nueva Solicitud de Servicio</h2>
+        <div className="form-header">
+          <h2>Publicar Nueva Solicitud de Servicio</h2>
+          <p className="form-subtitle">En Market del Este, conectamos tu necesidad con los mejores proveedores</p>
+        </div>
         
         {success && (
           <div className="success-message">

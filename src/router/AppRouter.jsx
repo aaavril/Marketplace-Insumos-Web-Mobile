@@ -1,9 +1,12 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import PublicRoute from './PublicRoute';
 import ProtectedRoute from './ProtectedRoute';
+import LandingPage from '../pages/LandingPage';
 import LoginPage from '../pages/LoginPage';
+import SignUpPage from '../pages/SignUpPage';
 import DashboardPage from '../pages/DashboardPage';
 import CreateServicePage from '../pages/CreateServicePage';
+import ServicesListPage from '../pages/ServicesListPage';
 import NotFoundPage from '../pages/NotFoundPage';
 
 /**
@@ -24,12 +27,27 @@ const AppRouter = () => {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Landing Page - Siempre accesible */}
+        <Route
+          path="/"
+          element={<LandingPage />}
+        />
+
         {/* Rutas públicas - Solo visibles si NO estás logueado */}
         <Route
           path="/login"
           element={
             <PublicRoute>
               <LoginPage />
+            </PublicRoute>
+          }
+        />
+
+        <Route
+          path="/signup"
+          element={
+            <PublicRoute>
+              <SignUpPage />
             </PublicRoute>
           }
         />
@@ -49,6 +67,15 @@ const AppRouter = () => {
           element={
             <ProtectedRoute>
               <CreateServicePage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/services"
+          element={
+            <ProtectedRoute>
+              <ServicesListPage />
             </ProtectedRoute>
           }
         />
@@ -74,8 +101,6 @@ const AppRouter = () => {
         />
         */}
 
-        {/* Ruta por defecto - redirige según autenticación */}
-        <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
 
         {/* Ruta 404 - debe ir al final */}
         <Route path="*" element={<NotFoundPage />} />

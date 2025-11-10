@@ -21,12 +21,16 @@ const DashboardPage = () => {
     <div className="dashboard-page">
       <header className="dashboard-header">
         <div className="header-content">
-          <div>
-            <h1>Marketplace de Servicios con Insumos</h1>
+          <div className="dashboard-brand">
+            <h1 className="dashboard-logo">Market del Este</h1>
+            <p className="dashboard-tagline">Marketplace de Punta del Este</p>
           </div>
-          <button onClick={handleLogout} className="btn-logout">
-            Cerrar Sesión
-          </button>
+          <div className="header-actions">
+            <span className="user-greeting">Hola, {state.currentUser?.name}</span>
+            <button onClick={handleLogout} className="btn-logout">
+              Cerrar Sesión
+            </button>
+          </div>
         </div>
       </header>
 
@@ -67,7 +71,10 @@ const DashboardPage = () => {
       </main>
 
       <footer className="dashboard-footer">
-        <p>Autenticación activa | Control de permisos funcionando | Rol: {state.currentUser.role}</p>
+        <div className="footer-content">
+          <p className="footer-brand">Market del Este</p>
+          <p className="footer-info">Rol: {state.currentUser?.role} | Autenticación activa</p>
+        </div>
       </footer>
     </div>
   );

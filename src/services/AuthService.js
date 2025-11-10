@@ -2,8 +2,38 @@ import { MOCK_USERS } from '../data/initialState';
 
 /**
  * Servicio de Autenticación
- * Maneja la lógica de negocio para el login basada en usuarios mock
+ * Maneja la lógica de negocio para el login basada en usuarios mock y registrados
  */
+
+/**
+ * Obtiene todos los usuarios disponibles (mock + registrados)
+ * @returns {Array} - Array de usuarios
+ */
+const getAllUsers = () => {
+  // Obtener usuarios registrados del localStorage (si existen)
+  try {
+    const storedUsers = localStorage.getItem('registeredUsers');
+    const registeredUsers = storedUsers ? JSON.parse(storedUsers) : [];
+    return [...MOCK_USERS, ...registeredUsers];
+  } catch (error) {
+    return MOCK_USERS;
+  }
+};
+
+/**
+ * Guarda un usuario registrado en localStorage
+ * @param {Object} user - Usuario a guardar
+ */
+export const saveRegisteredUser = (user) => {
+  try {
+    const storedUsers = localStorage.getItem('registeredUsers');
+    const registeredUsers = storedUsers ? JSON.parse(storedUsers) : [];
+    registeredUsers.push(user);
+    localStorage.setItem('registeredUsers', JSON.stringify(registeredUsers));
+  } catch (error) {
+    console.error('Error al guardar usuario:', error);
+  }
+};
 
 /**
  * Realiza el login de un usuario
@@ -16,8 +46,9 @@ export const login = (email, password) => {
   return new Promise((resolve, reject) => {
     // Simula tiempo de carga de una llamada a API
     setTimeout(() => {
-      // Busca el usuario por email
-      const user = MOCK_USERS.find(u => u.email === email);
+      // Busca el usuario por email en todos los usuarios disponibles
+      const allUsers = getAllUsers();
+      const user = allUsers.find(u => u.email === email);
 
       // Valida que el usuario exista
       if (!user) {
