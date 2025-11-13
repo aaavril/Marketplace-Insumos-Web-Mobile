@@ -1,4 +1,5 @@
 import { MOCK_SERVICES } from './mockServices';
+import { MOCK_SUPPLY_OFFERS } from './mockSupplyOffers';
 
 /**
  * Mock Users - Datos de prueba para el MVP
@@ -26,6 +27,13 @@ export const MOCK_USERS = [
     password: '123', 
     role: 'Proveedor de Insumos' 
   },
+  { 
+    id: 'u4', 
+    name: 'Mariana Servicios', 
+    email: 'serviciosplus@mail.com', 
+    password: '123', 
+    role: 'Proveedor de Servicio' 
+  },
 ];
 
 /**
@@ -40,6 +48,6 @@ export const initialState = {
   users: MOCK_USERS,         // Usuarios del sistema
   currentUser: null,         // Usuario actualmente autenticado
   quotes: [],                // Cotizaciones realizadas
-  supplyOffers: []           // Ofertas de insumos disponibles
+  supplyOffers: MOCK_SUPPLY_OFFERS // Ofertas de insumos disponibles (mock)
 };
 

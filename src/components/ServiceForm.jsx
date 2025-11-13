@@ -275,29 +275,6 @@ const ServiceForm = () => {
         </form>
       </div>
 
-      {/* Listado simple de servicios publicados por el solicitante */}
-      {state.services.filter(s => s.solicitanteId === state.currentUser.id).length > 0 && (
-        <div className="my-services-section">
-          <h3>Mis Servicios Publicados</h3>
-          <div className="services-list">
-            {state.services
-              .filter(s => s.solicitanteId === state.currentUser.id)
-              .map(service => (
-                <div key={service.id} className="service-card">
-                  <h4>{service.title}</h4>
-                  <p>{service.description}</p>
-                  <div className="service-meta">
-                    <span>📍 {service.location}</span>
-                    <span>📅 {service.date}</span>
-                    <span className={`status-badge ${service.status.toLowerCase()}`}>
-                      {service.status}
-                    </span>
-                  </div>
-                </div>
-              ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 };

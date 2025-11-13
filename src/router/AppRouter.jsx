@@ -7,6 +7,7 @@ import SignUpPage from '../pages/SignUpPage';
 import DashboardPage from '../pages/DashboardPage';
 import CreateServicePage from '../pages/CreateServicePage';
 import ServicesListPage from '../pages/ServicesListPage';
+import ServiceDetailPage from '../pages/ServiceDetailPage';
 import NotFoundPage from '../pages/NotFoundPage';
 
 /**
@@ -76,6 +77,15 @@ const AppRouter = () => {
           element={
             <ProtectedRoute>
               <ServicesListPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/services/:id"
+          element={
+            <ProtectedRoute>
+              <ServiceDetailPage />
             </ProtectedRoute>
           }
         />

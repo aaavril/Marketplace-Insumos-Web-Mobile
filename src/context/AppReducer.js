@@ -53,6 +53,24 @@ export const AppReducer = (state, action) => {
         ...state,
         services: [...state.services, action.payload]
       };
+
+    /**
+     * ADD_QUOTE - Agrega una nueva cotización a un servicio
+     * payload: { serviceId: string, quote: Object }
+     */
+    case 'ADD_QUOTE':
+      return {
+        ...state,
+        services: state.services.map(service =>
+          service.id === action.payload.serviceId
+            ? {
+                ...service,
+                quotes: [...(service.quotes || []), action.payload.quote]
+              }
+            : service
+        ),
+        quotes: [...state.quotes, action.payload.quote]
+      };
     
     // Acciones futuras a implementar:
     // - UPDATE_SERVICE: Actualizar servicio existente
@@ -63,8 +81,15 @@ export const AppReducer = (state, action) => {
     // - UPDATE_QUOTE: Actualizar cotización
     
     // ==================== OFERTAS DE INSUMOS ====================
-    // - ADD_SUPPLY_OFFER: Agregar oferta de insumos
-    // - UPDATE_SUPPLY_OFFER: Actualizar oferta de insumos
+    /**
+     * ADD_SUPPLY_OFFER - Agrega una nueva oferta de insumos
+     * payload: Object - SupplyOffer con items y totalPrice
+     */
+    case 'ADD_SUPPLY_OFFER':
+      return {
+        ...state,
+        supplyOffers: [...state.supplyOffers, action.payload]
+      };
     
     default:
       return state;

@@ -1,5 +1,5 @@
+import { useNavigate } from 'react-router-dom';
 import { useAppState } from '../context/GlobalStateContext';
-import { useAuth } from '../context/AuthContext';
 import './ServiceList.css';
 
 /**
@@ -7,8 +7,8 @@ import './ServiceList.css';
  * Filtra servicios por status === 'Publicado' para que Proveedores de Servicio puedan verlos
  */
 const ServiceList = () => {
+  const navigate = useNavigate();
   const { state } = useAppState();
-  const { getUserRole } = useAuth();
 
   // Filtrar servicios publicados (F2.HU3: status === 'Publicado')
   const publishedServices = state.services.filter(
@@ -21,14 +21,6 @@ const ServiceList = () => {
   const getSolicitanteName = (solicitanteId) => {
     const solicitante = state.users.find(user => user.id === solicitanteId);
     return solicitante ? solicitante.name : 'Usuario desconocido';
-  };
-
-  /**
-   * Maneja la acción de cotizar un servicio
-   */
-  const handleQuote = (serviceId) => {
-    // TODO: Implementar funcionalidad de cotización en próximas HU
-    alert(`Cotizar servicio ${serviceId} - Funcionalidad próximamente`);
   };
 
   if (publishedServices.length === 0) {
@@ -98,10 +90,10 @@ const ServiceList = () => {
                 </span>
               </div>
               <button
-                onClick={() => handleQuote(service.id)}
+                onClick={() => navigate(`/services/${service.id}`)}
                 className="btn-quote"
               >
-                Cotizar
+                Ver detalle y cotizar
               </button>
             </div>
           </div>

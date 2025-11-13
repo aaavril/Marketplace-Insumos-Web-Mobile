@@ -16,7 +16,26 @@ export const MOCK_SERVICES = [
       { id: 2, name: 'Tejas', quantity: '200', unit: 'unidades' },
       { id: 3, name: 'Pintura exterior', quantity: '20', unit: 'litros' }
     ],
-    quotes: [],
+    quotes: [
+      {
+        id: 'q1',
+        serviceId: 's1',
+        serviceProviderId: 'u2',
+        price: 1800,
+        deadline: '2024-02-25',
+        notes: 'Incluye materiales y mano de obra. Garantía de 12 meses.',
+        createdAt: '2024-02-02T10:00:00.000Z'
+      },
+      {
+        id: 'q2',
+        serviceId: 's1',
+        serviceProviderId: 'u4',
+        price: 1950,
+        deadline: '2024-03-01',
+        notes: 'Revisión previa necesaria. Precio referencial.',
+        createdAt: '2024-02-03T14:30:00.000Z'
+      }
+    ],
     supplyOffers: [],
     solicitanteId: 'u1'
   },
@@ -32,7 +51,17 @@ export const MOCK_SERVICES = [
       { id: 2, name: 'Interruptores', quantity: '15', unit: 'unidades' },
       { id: 3, name: 'Tablero principal', quantity: '1', unit: 'unidad' }
     ],
-    quotes: [],
+    quotes: [
+      {
+        id: 'q3',
+        serviceId: 's2',
+        serviceProviderId: 'u2',
+        price: 3200,
+        deadline: '2024-03-05',
+        notes: 'Incluye certificación y materiales homologados.',
+        createdAt: '2024-02-04T09:15:00.000Z'
+      }
+    ],
     supplyOffers: [],
     solicitanteId: 'u1'
   },
