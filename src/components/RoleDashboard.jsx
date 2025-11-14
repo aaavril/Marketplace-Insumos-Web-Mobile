@@ -3,6 +3,25 @@ import { useAppState } from '../context/GlobalStateContext';
 import SupplyOfferForm from './SupplyOfferForm';
 import './RoleDashboard.css';
 
+const getStatusClass = (status) =>
+  status
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, '-');
+
+const getRatingLabel = (rating) => {
+  if (rating == null) return null;
+  const labels = {
+    5: '⭐⭐⭐⭐⭐ Excelente',
+    4: '⭐⭐⭐⭐ Muy bueno',
+    3: '⭐⭐⭐ Bueno',
+    2: '⭐⭐ Regular',
+    1: '⭐ Deficiente',
+  };
+  return labels[rating] || `${rating}/5`;
+};
+
 /**
  * Dashboard específico para Solicitantes
  * Muestra funcionalidades relevantes para usuarios que solicitan servicios
@@ -15,9 +34,30 @@ const SolicitanteDashboard = () => {
     navigate('/services/create');
   };
 
-  const myServices = state.services.filter(
-    (service) => service.solicitanteId === state.currentUser.id
+  const myActiveServices = state.services.filter(
+    (service) =>
+      service.solicitanteId === state.currentUser.id &&
+      !service.status.toLowerCase().includes('completado') &&
+      !service.status.toLowerCase().includes('finalizado')
   );
+
+  const myPastServices = state.services.filter(
+    (service) =>
+      service.solicitanteId === state.currentUser.id &&
+      (service.status.toLowerCase().includes('completado') ||
+        service.status.toLowerCase().includes('finalizado'))
+  );
+
+  const getProviderName = (providerId) => {
+    const provider = state.users.find((user) => user.id === providerId);
+    return provider ? provider.name : 'Proveedor';
+  };
+
+  const getAssignedProviderName = (service) => {
+    if (!service.selectedQuoteId) return null;
+    const selectedQuote = service.quotes?.find((quote) => quote.id === service.selectedQuoteId);
+    return selectedQuote ? getProviderName(selectedQuote.serviceProviderId) : null;
+  };
 
   return (
     <div className="role-dashboard">
@@ -38,16 +78,16 @@ const SolicitanteDashboard = () => {
       <div className="dashboard-content">
         <div className="content-section">
           <h3>Mis Solicitudes Activas</h3>
-          {myServices.length > 0 ? (
+          {myActiveServices.length > 0 ? (
             <div className="services-list">
-              {myServices.map((service) => (
+              {myActiveServices.map((service) => (
                 <div key={service.id} className="service-item">
                   <h4>{service.title}</h4>
                   <p>{service.description}</p>
                   <div className="service-meta">
                     <span>📍 {service.location}</span>
                     <span>📅 {service.date}</span>
-                    <span className={`status-badge ${service.status.toLowerCase()}`}>
+                    <span className={`status-badge ${getStatusClass(service.status)}`}>
                       {service.status}
                     </span>
                   </div>
@@ -81,6 +121,61 @@ const SolicitanteDashboard = () => {
           )}
         </div>
 
+        <div className="content-section">
+          <h3>Mis Solicitudes Pasadas</h3>
+          {myPastServices.length > 0 ? (
+            <div className="services-list">
+              {myPastServices.map((service) => {
+                const ratingLabel = getRatingLabel(service.rating);
+                const providerName = getAssignedProviderName(service);
+
+                return (
+                  <div key={service.id} className="service-item">
+                    <h4>{service.title}</h4>
+                    <p>{service.description}</p>
+                    <div className="service-meta">
+                      <span>📍 {service.location}</span>
+                      <span>📅 {service.date}</span>
+                      <span className={`status-badge ${getStatusClass(service.status)}`}>
+                        {service.status}
+                      </span>
+                    </div>
+                    {providerName && (
+                      <div className="service-meta provider-chip">
+                        <span>👷 Prestador asignado: {providerName}</span>
+                      </div>
+                    )}
+                    {ratingLabel && (
+                      <div className="service-rating-chip">⭐ {ratingLabel}</div>
+                    )}
+                    <div className="service-item-footer">
+                      <div className="chips-group">
+                        <span className="quote-chip">
+                          {(service.quotes && service.quotes.length) || 0} cotizaciones
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        className="link-btn"
+                        onClick={() => navigate(`/services/${service.id}`)}
+                      >
+                        Ver detalle →
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="empty-state">
+              <p>Todavía no tienes solicitudes pasadas.</p>
+              <button onClick={handlePublicarServicio} className="link-btn">
+                Publicar nueva solicitud
+              </button>
+            </div>
+          )}
+        </div>
+
       </div>
     </div>
   );
@@ -99,13 +194,34 @@ const ProveedorServicioDashboard = () => {
   };
 
   const handleVerHistorial = () => {
-    // TODO: Implementar historial de servicios atendidos por el proveedor
-    alert('Historial de servicios - Próximamente disponible');
+    navigate('/services/history');
   };
 
-  const myServices = state.services.filter((service) =>
-    service.quotes?.some((quote) => quote.serviceProviderId === state.currentUser.id)
+  const handlePublicarServicio = () => {
+    navigate('/services/create');
+  };
+
+  const myServices = state.services.filter((service) => {
+    if (!service.quotes?.some((quote) => quote.serviceProviderId === state.currentUser.id)) {
+      return false;
+    }
+    return !['Asignado', 'Completado'].includes(service.status);
+  });
+
+  const myAssignedServices = state.services.filter(
+    (service) =>
+      service.status === 'Asignado' &&
+      service.quotes?.some((quote) => quote.serviceProviderId === state.currentUser.id)
   );
+
+  const myFinalizedServices = state.services.filter((service) => {
+    const status = service.status.toLowerCase();
+    const belongsToProvider = service.quotes?.some(
+      (quote) => quote.serviceProviderId === state.currentUser.id
+    );
+    if (!belongsToProvider) return false;
+    return status.includes('completado') || status.includes('finalizado');
+  });
 
   const myQuotes = state.quotes
     ?.filter((quote) => quote.serviceProviderId === state.currentUser.id)
@@ -139,6 +255,12 @@ const ProveedorServicioDashboard = () => {
         >
           Ver historial de servicios
         </button>
+        <button
+          onClick={handlePublicarServicio}
+          className="action-btn secondary-btn"
+        >
+          Publicar servicio propio
+        </button>
       </div>
 
       <div className="dashboard-content">
@@ -153,10 +275,15 @@ const ProveedorServicioDashboard = () => {
                   <div className="service-meta">
                     <span>📍 {service.location}</span>
                     <span>📅 {service.date}</span>
-                    <span className={`status-badge ${service.status.toLowerCase()}`}>
+                    <span className={`status-badge ${getStatusClass(service.status)}`}>
                       {service.status}
                     </span>
                   </div>
+                  {service.rating != null && (
+                    <div className="service-rating-chip">
+                      ⭐ Valoración: {service.rating}/5
+                    </div>
+                  )}
                   <div className="service-item-footer">
                     <div className="chips-group">
                       <span className="quote-chip">
@@ -182,6 +309,90 @@ const ProveedorServicioDashboard = () => {
               <p>Aún no has cotizado ningún servicio.</p>
               <button onClick={handleVerServicios} className="link-btn">
                 Buscar servicios para cotizar
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="content-section">
+          <h3>Servicios asignados</h3>
+          {myAssignedServices.length > 0 ? (
+            <div className="services-list">
+              {myAssignedServices.map((service) => (
+                <div key={service.id} className="service-item">
+                  <h4>{service.title}</h4>
+                  <p>{service.description}</p>
+                  <div className="service-meta">
+                    <span>📍 {service.location}</span>
+                    <span>📅 {service.date}</span>
+                    <span className={`status-badge ${getStatusClass(service.status)}`}>
+                      {service.status}
+                    </span>
+                  </div>
+                  <div className="service-item-footer">
+                    <div className="chips-group">
+                      <span className="quote-chip">
+                        {service.quotes?.filter(q => q.serviceProviderId === state.currentUser.id).length || 0} mis cotizaciones
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      className="link-btn"
+                      onClick={() => navigate(`/services/${service.id}`)}
+                    >
+                      Ver detalle →
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="empty-state">
+              <p>Aún no tienes servicios asignados.</p>
+              <button onClick={handleVerHistorial} className="link-btn">
+                Revisar historial
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="content-section">
+          <h3>Servicios completados</h3>
+          {myFinalizedServices.length > 0 ? (
+            <div className="services-list">
+              {myFinalizedServices.map((service) => (
+                <div key={service.id} className="service-item">
+                  <h4>{service.title}</h4>
+                  <p>{service.description}</p>
+                  <div className="service-meta">
+                    <span>📍 {service.location}</span>
+                    <span>📅 {service.date}</span>
+                    <span className={`status-badge ${getStatusClass(service.status)}`}>
+                      {service.status}
+                    </span>
+                  </div>
+                  <div className="service-item-footer">
+                    <div className="chips-group">
+                      <span className="quote-chip">
+                        {service.quotes?.filter(q => q.serviceProviderId === state.currentUser.id).length || 0} mis cotizaciones
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      className="link-btn"
+                      onClick={() => navigate(`/services/${service.id}`)}
+                    >
+                      Ver detalle →
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="empty-state">
+              <p>Todavía no tienes servicios completados.</p>
+              <button onClick={handleVerHistorial} className="link-btn">
+                Revisar historial
               </button>
             </div>
           )}

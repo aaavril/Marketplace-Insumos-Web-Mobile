@@ -83,6 +83,8 @@ const ServiceForm = () => {
         requiredSupplies: requiredSupplies.filter(s => s.name.trim() !== ''), // F2.HU2: Filtrar insumos vacíos
         quotes: [],
         supplyOffers: [],
+      selectedQuoteId: null,
+      rating: null,
         solicitanteId: state.currentUser.id // Vinculación con el creador
       };
 

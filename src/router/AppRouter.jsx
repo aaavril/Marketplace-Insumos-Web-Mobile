@@ -8,6 +8,7 @@ import DashboardPage from '../pages/DashboardPage';
 import CreateServicePage from '../pages/CreateServicePage';
 import ServicesListPage from '../pages/ServicesListPage';
 import ServiceDetailPage from '../pages/ServiceDetailPage';
+import ServiceHistoryPage from '../pages/ServiceHistoryPage';
 import NotFoundPage from '../pages/NotFoundPage';
 
 /**
@@ -86,6 +87,15 @@ const AppRouter = () => {
           element={
             <ProtectedRoute>
               <ServiceDetailPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/services/history"
+          element={
+            <ProtectedRoute>
+              <ServiceHistoryPage />
             </ProtectedRoute>
           }
         />

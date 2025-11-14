@@ -71,6 +71,23 @@ export const AppReducer = (state, action) => {
         ),
         quotes: [...state.quotes, action.payload.quote]
       };
+
+    /**
+     * MARK_SERVICE_IN_EVALUATION - Cambia el estado del servicio a "En Evaluación"
+     * payload: { serviceId: string }
+     */
+    case 'MARK_SERVICE_IN_EVALUATION':
+      return {
+        ...state,
+        services: state.services.map(service =>
+          service.id === action.payload.serviceId
+            ? {
+                ...service,
+                status: 'En Evaluación'
+              }
+            : service
+        )
+      };
     
     // Acciones futuras a implementar:
     // - UPDATE_SERVICE: Actualizar servicio existente
@@ -89,6 +106,48 @@ export const AppReducer = (state, action) => {
       return {
         ...state,
         supplyOffers: [...state.supplyOffers, action.payload]
+      };
+
+    /**
+     * UPDATE_SERVICE_STATUS - Actualiza el estado de un servicio y su cotización seleccionada
+     * payload: { serviceId: string, status: string, selectedQuoteId?: string | null }
+     */
+    case 'UPDATE_SERVICE_STATUS':
+      return {
+        ...state,
+        services: state.services.map(service =>
+          service.id === action.payload.serviceId
+            ? {
+                ...service,
+                status: action.payload.status ?? service.status,
+                selectedQuoteId:
+                  action.payload.hasOwnProperty('selectedQuoteId')
+                    ? action.payload.selectedQuoteId
+                    : service.selectedQuoteId ?? null
+              }
+            : service
+        )
+      };
+
+    /**
+     * MARK_AS_COMPLETED - Marca un servicio como completado y guarda una valoración
+     * payload: { serviceId: string, rating?: number | null }
+     */
+    case 'MARK_AS_COMPLETED':
+      return {
+        ...state,
+        services: state.services.map(service =>
+          service.id === action.payload.serviceId
+            ? {
+                ...service,
+                status: 'Completado',
+                rating:
+                  typeof action.payload.rating === 'number'
+                    ? action.payload.rating
+                    : null
+              }
+            : service
+        )
       };
     
     default:

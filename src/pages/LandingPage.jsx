@@ -67,20 +67,6 @@ const LandingPage = () => {
                 Ver más
               </button>
             </div>
-            <div className="hero-stats">
-              <div className="stat-item">
-                <div className="stat-number">100+</div>
-                <div className="stat-label">Servicios activos</div>
-              </div>
-              <div className="stat-item">
-                <div className="stat-number">50+</div>
-                <div className="stat-label">Proveedores</div>
-              </div>
-              <div className="stat-item">
-                <div className="stat-number">24/7</div>
-                <div className="stat-label">Disponibilidad</div>
-              </div>
-            </div>
           </div>
         </div>
         <div className="hero-image">
@@ -170,7 +156,7 @@ const LandingPage = () => {
       {/* How it Works */}
       <section className="how-it-works-section">
         <div className="container">
-          <div className="section-header">
+          <div className="section-header" id="how-it-works">
             <div className="section-badge">Proceso</div>
             <h2 className="section-title">
               ¿Cómo funciona?

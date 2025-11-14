@@ -26,7 +26,6 @@ const DashboardPage = () => {
             <p className="dashboard-tagline">Marketplace de Punta del Este</p>
           </div>
           <div className="header-actions">
-            <span className="user-greeting">Hola, {state.currentUser?.name}</span>
             <button onClick={handleLogout} className="btn-logout">
               Cerrar Sesión
             </button>
@@ -38,36 +37,6 @@ const DashboardPage = () => {
         {/* Dashboard específico por rol - Control de Acceso (F1.HU3) */}
         <RoleDashboard />
 
-        {/* Vista para otros roles (Proveedores) */}
-        {state.currentUser?.role !== 'Solicitante' && (
-          <section className="info-card">
-            <h2>Bienvenido, {state.currentUser?.name}</h2>
-            <p>La vista para {state.currentUser?.role} se implementará próximamente.</p>
-          </section>
-        )}
-
-        {/* Panel de estadísticas generales */}
-        <section className="info-card">
-          <h2>Estadísticas Generales</h2>
-          <div className="stats">
-            <div className="stat-item">
-              <span className="stat-label">Usuarios Registrados:</span>
-              <span className="stat-value">{state.users.length}</span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-label">Servicios:</span>
-              <span className="stat-value">{state.services.length}</span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-label">Cotizaciones:</span>
-              <span className="stat-value">{state.quotes.length}</span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-label">Ofertas de Insumos:</span>
-              <span className="stat-value">{state.supplyOffers.length}</span>
-            </div>
-          </div>
-        </section>
       </main>
 
       <footer className="dashboard-footer">

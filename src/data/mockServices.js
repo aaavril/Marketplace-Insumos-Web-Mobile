@@ -23,6 +23,7 @@ export const MOCK_SERVICES = [
         serviceProviderId: 'u2',
         price: 1800,
         deadline: '2024-02-25',
+        duration: 7,
         notes: 'Incluye materiales y mano de obra. Garantía de 12 meses.',
         createdAt: '2024-02-02T10:00:00.000Z'
       },
@@ -32,11 +33,14 @@ export const MOCK_SERVICES = [
         serviceProviderId: 'u4',
         price: 1950,
         deadline: '2024-03-01',
+        duration: 10,
         notes: 'Revisión previa necesaria. Precio referencial.',
         createdAt: '2024-02-03T14:30:00.000Z'
       }
     ],
     supplyOffers: [],
+    selectedQuoteId: null,
+    rating: null,
     solicitanteId: 'u1'
   },
   {
@@ -58,11 +62,14 @@ export const MOCK_SERVICES = [
         serviceProviderId: 'u2',
         price: 3200,
         deadline: '2024-03-05',
+        duration: 12,
         notes: 'Incluye certificación y materiales homologados.',
         createdAt: '2024-02-04T09:15:00.000Z'
       }
     ],
     supplyOffers: [],
+    selectedQuoteId: null,
+    rating: null,
     solicitanteId: 'u1'
   },
   {
@@ -79,6 +86,8 @@ export const MOCK_SERVICES = [
     ],
     quotes: [],
     supplyOffers: [],
+    selectedQuoteId: null,
+    rating: null,
     solicitanteId: 'u1'
   },
   {
@@ -95,6 +104,8 @@ export const MOCK_SERVICES = [
     ],
     quotes: [],
     supplyOffers: [],
+    selectedQuoteId: null,
+    rating: null,
     solicitanteId: 'u1'
   },
   {
@@ -111,6 +122,8 @@ export const MOCK_SERVICES = [
     ],
     quotes: [],
     supplyOffers: [],
+    selectedQuoteId: null,
+    rating: null,
     solicitanteId: 'u1'
   }
 ];

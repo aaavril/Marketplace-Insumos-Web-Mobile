@@ -14,6 +14,7 @@ const QuoteForm = ({ serviceId }) => {
   const [price, setPrice] = useState('');
   const [deadline, setDeadline] = useState('');
   const [notes, setNotes] = useState('');
+  const [duration, setDuration] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
@@ -26,6 +27,7 @@ const QuoteForm = ({ serviceId }) => {
     setPrice('');
     setDeadline('');
     setNotes('');
+    setDuration('');
   };
 
   const handleSubmit = (event) => {
@@ -45,12 +47,19 @@ const QuoteForm = ({ serviceId }) => {
         throw new Error('Selecciona un plazo estimado');
       }
 
+      const durationValue = parseInt(duration, 10);
+
+      if (Number.isNaN(durationValue) || durationValue <= 0) {
+        throw new Error('Ingresa una duración estimada en días (mayor a cero)');
+      }
+
       const newQuote = {
         id: Date.now().toString(),
         serviceId,
         serviceProviderId: user.id,
         price: priceValue,
         deadline,
+        duration: durationValue,
         notes,
         createdAt: new Date().toISOString()
       };
@@ -111,6 +120,20 @@ const QuoteForm = ({ serviceId }) => {
             required
             disabled={loading}
             min={new Date().toISOString().split('T')[0]}
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="quote-duration">Duración estimada (días)</label>
+          <input
+            id="quote-duration"
+            type="number"
+            min="1"
+            value={duration}
+            onChange={(e) => setDuration(e.target.value)}
+            placeholder="Ej: 5"
+            required
+            disabled={loading}
           />
         </div>
 
