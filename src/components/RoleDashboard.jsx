@@ -212,10 +212,6 @@ const ProveedorServicioDashboard = () => {
     navigate('/services');
   };
 
-  const handleVerHistorial = () => {
-    navigate('/services/history');
-  };
-
   const handlePublicarServicio = () => {
     navigate('/services/create');
   };
@@ -285,16 +281,12 @@ const ProveedorServicioDashboard = () => {
       <div className="dashboard-header white-panel">
         <div className="dashboard-heading">
           <h2>Gestiona tus servicios como proveedor</h2>
-          <h2>Gestiona tus servicios como proveedor</h2>
           <p>Monitorea tus cotizaciones y el estado de cada servicio en curso.</p>
         </div>
       </div>
       <div className="header-actions inline">
         <button onClick={handleVerServicios} className="action-btn primary-btn compact">
           Ver servicios disponibles
-        </button>
-        <button onClick={handleVerHistorial} className="action-btn secondary-btn compact">
-          Ver historial
         </button>
       </div>
 
