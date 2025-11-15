@@ -23,7 +23,7 @@ const ServicesListPage = () => {
             ← Volver al Dashboard
           </button>
           <div className="page-brand">
-            <span className="brand-name">Market del Este</span>
+            <span className="brand-name">MARKET DEL ESTE</span>
           </div>
         </div>
         <div className="header-content">

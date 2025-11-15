@@ -25,7 +25,7 @@ const LandingPage = () => {
         <div className="container">
           <div className="nav-content">
             <div className="logo-nav">
-              <h1 className="logo-text">Market del Este</h1>
+              <h1 className="logo-text">MARKET DEL ESTE</h1>
             </div>
             <div className="nav-actions">
               <button onClick={() => navigate('/login')} className="btn-nav-secondary">
@@ -69,20 +69,6 @@ const LandingPage = () => {
             </div>
           </div>
         </div>
-        <div className="hero-image">
-          <div className="floating-card card-1">
-            <div className="card-icon">🏗️</div>
-            <div className="card-title">Construcción</div>
-          </div>
-          <div className="floating-card card-2">
-            <div className="card-icon">🔧</div>
-            <div className="card-title">Servicios</div>
-          </div>
-          <div className="floating-card card-3">
-            <div className="card-icon">📦</div>
-            <div className="card-title">Insumos</div>
-          </div>
-        </div>
       </section>
 
       {/* Features Section */}
@@ -118,7 +104,6 @@ const LandingPage = () => {
             </div>
 
             <div className="feature-card feature-card-primary">
-              <div className="feature-badge">Popular</div>
               <div className="feature-icon-wrapper">
                 <div className="feature-icon">⚙️</div>
               </div>
@@ -199,7 +184,7 @@ const LandingPage = () => {
           <div className="cta-card">
             <h2 className="cta-title">¿Listo para comenzar?</h2>
             <p className="cta-description">
-              Únete a Market del Este y forma parte de la comunidad que está transformando 
+              Únete a MARKET DEL ESTE y forma parte de la comunidad que está transformando 
               cómo se conectan servicios e insumos en Punta del Este
             </p>
             <button onClick={handleGetStarted} className="btn-cta-primary">
@@ -215,7 +200,7 @@ const LandingPage = () => {
         <div className="container">
           <div className="footer-content">
             <div className="footer-brand">
-              <h3 className="footer-logo">Market del Este</h3>
+              <h3 className="footer-logo">MARKET DEL ESTE</h3>
               <p className="footer-tagline">Marketplace de Punta del Este</p>
             </div>
             <div className="footer-links">
@@ -234,7 +219,7 @@ const LandingPage = () => {
             </div>
           </div>
           <div className="footer-bottom">
-            <p>&copy; 2024 Market del Este. Todos los derechos reservados.</p>
+            <p>&copy; 2024 MARKET DEL ESTE. Todos los derechos reservados.</p>
           </div>
         </div>
       </footer>

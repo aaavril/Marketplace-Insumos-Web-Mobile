@@ -116,7 +116,7 @@ const ServiceForm = () => {
       <div className="service-form-card">
         <div className="form-header">
           <h2>Publicar Nueva Solicitud de Servicio</h2>
-          <p className="form-subtitle">En Market del Este, conectamos tu necesidad con los mejores proveedores</p>
+          <p className="form-subtitle">En MARKET DEL ESTE, conectamos tu necesidad con los mejores proveedores</p>
         </div>
         
         {success && (

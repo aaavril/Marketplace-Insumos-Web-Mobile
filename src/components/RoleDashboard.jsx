@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useAppState } from '../context/GlobalStateContext';
-import SupplyOfferForm from './SupplyOfferForm';
+import { useMemo, useState } from 'react';
 import './RoleDashboard.css';
 
 const getStatusClass = (status) =>
@@ -34,19 +34,26 @@ const SolicitanteDashboard = () => {
     navigate('/services/create');
   };
 
-  const myActiveServices = state.services.filter(
-    (service) =>
-      service.solicitanteId === state.currentUser.id &&
-      !service.status.toLowerCase().includes('completado') &&
-      !service.status.toLowerCase().includes('finalizado')
+  const myAllServices = state.services.filter(
+    (service) => service.solicitanteId === state.currentUser.id
   );
 
-  const myPastServices = state.services.filter(
-    (service) =>
-      service.solicitanteId === state.currentUser.id &&
-      (service.status.toLowerCase().includes('completado') ||
-        service.status.toLowerCase().includes('finalizado'))
-  );
+  const [serviceFilter, setServiceFilter] = useState('todos');
+
+  const totalServices = myAllServices.length;
+  const finalizedCount = myAllServices.filter((service) => {
+    const status = service.status.toLowerCase();
+    return status.includes('finalizado') || status.includes('completado');
+  }).length;
+  const inProgressCount = totalServices - finalizedCount;
+
+  const filters = [
+    { key: 'todos', label: 'Todos' },
+    { key: 'activos', label: 'Activos' },
+    { key: 'solicitados', label: 'Solicitados' },
+    { key: 'en-curso', label: 'En curso' },
+    { key: 'finalizados', label: 'Finalizados' },
+  ];
 
   const getProviderName = (providerId) => {
     const provider = state.users.find((user) => user.id === providerId);
@@ -59,45 +66,113 @@ const SolicitanteDashboard = () => {
     return selectedQuote ? getProviderName(selectedQuote.serviceProviderId) : null;
   };
 
+  const filteredServices = myAllServices.filter((service) => {
+    const normalizedStatus = service.status.toLowerCase();
+
+    switch (serviceFilter) {
+      case 'activos':
+        return !normalizedStatus.includes('finalizado') && !normalizedStatus.includes('completado');
+      case 'solicitados':
+        return normalizedStatus === 'publicado';
+      case 'en-curso':
+        return normalizedStatus === 'en evaluación' || normalizedStatus === 'asignado';
+      case 'finalizados':
+        return normalizedStatus.includes('finalizado') || normalizedStatus.includes('completado');
+      case 'todos':
+      default:
+        return true;
+    }
+  });
+
+  const orderedServices = useMemo(() => {
+    if (serviceFilter !== 'todos') {
+      return filteredServices;
+    }
+
+    const getWeight = (service) => {
+      const status = service.status.toLowerCase();
+      return status.includes('finalizado') || status.includes('completado') ? 1 : 0;
+    };
+
+    return [...filteredServices].sort((a, b) => {
+      const diff = getWeight(a) - getWeight(b);
+      if (diff !== 0) return diff;
+      return 0;
+    });
+  }, [filteredServices, serviceFilter]);
+
   return (
-    <div className="role-dashboard">
-      <div className="dashboard-header">
-        <h2>Dashboard Solicitante</h2>
-        <p>Gestiona tus solicitudes de servicio en Market del Este</p>
+    <div className="role-dashboard solicitante-dashboard">
+      <div className="dashboard-header white-panel with-actions">
+        <div>
+          <h2>Gestiona tus solicitudes de servicio en MARKET DEL ESTE</h2>
+        </div>
+      </div>
+      <div className="header-actions inline">
+        <button onClick={handlePublicarServicio} className="action-btn primary-btn compact">
+          Publicar servicio
+        </button>
       </div>
 
-      <div className="dashboard-actions">
-        <button 
-          onClick={handlePublicarServicio}
-          className="action-btn primary-btn"
-        >
-          Publicar Solicitud de Servicio
-        </button>
+      <div className="services-summary below-actions">
+        <div className="summary-card">
+          <span>Total solicitados</span>
+          <strong>{totalServices}</strong>
+        </div>
+        <div className="summary-card">
+          <span>En curso</span>
+          <strong>{inProgressCount}</strong>
+        </div>
+        <div className="summary-card">
+          <span>Finalizados</span>
+          <strong>{finalizedCount}</strong>
+        </div>
       </div>
 
       <div className="dashboard-content">
         <div className="content-section">
-          <h3>Mis Solicitudes Activas</h3>
-          {myActiveServices.length > 0 ? (
-            <div className="services-list">
-              {myActiveServices.map((service) => (
-                <div key={service.id} className="service-item">
-                  <h4>{service.title}</h4>
-                  <p>{service.description}</p>
-                  <div className="service-meta">
-                    <span>📍 {service.location}</span>
-                    <span>📅 {service.date}</span>
-                    <span className={`status-badge ${getStatusClass(service.status)}`}>
-                      {service.status}
-                    </span>
+          <div className="services-filter-header">
+            <h3>Servicios</h3>
+            <div className="filter-pills">
+              {filters.map(({ key, label }) => (
+                <button
+                  key={key}
+                  type="button"
+                  className={`filter-pill ${serviceFilter === key ? 'active' : ''}`}
+                  onClick={() => setServiceFilter(key)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {orderedServices.length > 0 ? (
+            <div className="services-list condensed">
+              {orderedServices.map((service) => (
+                <div key={service.id} className="service-item compact">
+                  <div className="service-summary">
+                    <h4>{service.title}</h4>
                   </div>
+                  <p className="service-short">{service.description}</p>
+                  <div className="service-meta mini">
+                    <span>📅 {service.date}</span>
+                    <span>📍 {service.location}</span>
+                  </div>
+                  {getAssignedProviderName(service) && (
+                    <div className="service-meta provider-chip mini">
+                      <span>👷 Prestador: {getAssignedProviderName(service)}</span>
+                    </div>
+                  )}
+                  {service.rating != null && (
+                    <div className="service-rating-chip small">
+                      ⭐ {getRatingLabel(service.rating)}
+                    </div>
+                  )}
                   <div className="service-item-footer">
                     <div className="chips-group">
                       <span className="quote-chip">
                         {(service.quotes && service.quotes.length) || 0} cotizaciones
-                      </span>
-                      <span className="offer-chip">
-                        {state.supplyOffers?.length || 0} packs de insumos
                       </span>
                     </div>
                     <button
@@ -113,69 +188,13 @@ const SolicitanteDashboard = () => {
             </div>
           ) : (
             <div className="empty-state">
-              <p>No tienes solicitudes activas</p>
+              <p>No hay servicios para el filtro seleccionado.</p>
               <button onClick={handlePublicarServicio} className="link-btn">
-                Crear tu primera solicitud
+                Publicar nuevo servicio
               </button>
             </div>
           )}
         </div>
-
-        <div className="content-section">
-          <h3>Mis Solicitudes Pasadas</h3>
-          {myPastServices.length > 0 ? (
-            <div className="services-list">
-              {myPastServices.map((service) => {
-                const ratingLabel = getRatingLabel(service.rating);
-                const providerName = getAssignedProviderName(service);
-
-                return (
-                  <div key={service.id} className="service-item">
-                    <h4>{service.title}</h4>
-                    <p>{service.description}</p>
-                    <div className="service-meta">
-                      <span>📍 {service.location}</span>
-                      <span>📅 {service.date}</span>
-                      <span className={`status-badge ${getStatusClass(service.status)}`}>
-                        {service.status}
-                      </span>
-                    </div>
-                    {providerName && (
-                      <div className="service-meta provider-chip">
-                        <span>👷 Prestador asignado: {providerName}</span>
-                      </div>
-                    )}
-                    {ratingLabel && (
-                      <div className="service-rating-chip">⭐ {ratingLabel}</div>
-                    )}
-                    <div className="service-item-footer">
-                      <div className="chips-group">
-                        <span className="quote-chip">
-                          {(service.quotes && service.quotes.length) || 0} cotizaciones
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        className="link-btn"
-                        onClick={() => navigate(`/services/${service.id}`)}
-                      >
-                        Ver detalle →
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="empty-state">
-              <p>Todavía no tienes solicitudes pasadas.</p>
-              <button onClick={handlePublicarServicio} className="link-btn">
-                Publicar nueva solicitud
-              </button>
-            </div>
-          )}
-        </div>
-
       </div>
     </div>
   );
@@ -201,233 +220,174 @@ const ProveedorServicioDashboard = () => {
     navigate('/services/create');
   };
 
-  const myServices = state.services.filter((service) => {
-    if (!service.quotes?.some((quote) => quote.serviceProviderId === state.currentUser.id)) {
-      return false;
-    }
-    return !['Asignado', 'Completado'].includes(service.status);
-  });
-
-  const myAssignedServices = state.services.filter(
-    (service) =>
-      service.status === 'Asignado' &&
-      service.quotes?.some((quote) => quote.serviceProviderId === state.currentUser.id)
+  const providerServices = useMemo(
+    () =>
+      state.services.filter((service) =>
+        service.quotes?.some((quote) => quote.serviceProviderId === state.currentUser.id)
+      ),
+    [state.services, state.currentUser.id]
   );
 
-  const myFinalizedServices = state.services.filter((service) => {
-    const status = service.status.toLowerCase();
-    const belongsToProvider = service.quotes?.some(
-      (quote) => quote.serviceProviderId === state.currentUser.id
-    );
-    if (!belongsToProvider) return false;
-    return status.includes('completado') || status.includes('finalizado');
+  const providerQuotes =
+    state.quotes?.filter((quote) => quote.serviceProviderId === state.currentUser.id) ?? [];
+
+  const [serviceFilter, setServiceFilter] = useState('todos');
+
+  const cotizadosCount = providerServices.length;
+  const asignadosCount = providerServices.filter((service) => service.status === 'Asignado').length;
+  const finalizadosCount = providerServices.filter((service) => {
+    const normalized = service.status.toLowerCase();
+    return normalized.includes('finalizado') || normalized.includes('completado');
+  }).length;
+  const filters = [
+    { key: 'todos', label: 'Todos' },
+    { key: 'cotizados', label: 'Cotizados' },
+    { key: 'asignados', label: 'Asignados' },
+    { key: 'finalizados', label: 'Finalizados' },
+  ];
+
+  const getMyQuoteForService = (service) =>
+    service.quotes?.find((quote) => quote.serviceProviderId === state.currentUser.id);
+
+  const filteredServices = providerServices.filter((service) => {
+    const normalizedStatus = service.status.toLowerCase();
+
+    switch (serviceFilter) {
+      case 'activos':
+        return true;
+      case 'cotizados':
+        return true;
+      case 'asignados':
+        return normalizedStatus === 'asignado';
+      case 'finalizados':
+        return normalizedStatus.includes('finalizado') || normalizedStatus.includes('completado');
+      case 'todos':
+      default:
+        return true;
+    }
   });
 
-  const myQuotes = state.quotes
-    ?.filter((quote) => quote.serviceProviderId === state.currentUser.id)
-    .map((quote) => {
-      const service = state.services.find((s) => s.id === quote.serviceId);
-      return {
-        ...quote,
-        serviceTitle: service?.title ?? 'Servicio',
-        serviceStatus: service?.status ?? 'En revisión',
-        serviceLocation: service?.location ?? ''
-      };
-    }) ?? [];
+  const orderedServices = useMemo(() => {
+    if (serviceFilter !== 'todos') {
+      return filteredServices;
+    }
+    const getWeight = (service) => {
+      const normalized = service.status.toLowerCase();
+      if (normalized.includes('finalizado') || normalized.includes('completado')) return 2;
+      if (normalized === 'asignado') return 1;
+      return 0;
+    };
+    return [...filteredServices].sort((a, b) => getWeight(a) - getWeight(b));
+  }, [filteredServices, serviceFilter]);
 
   return (
-    <div className="role-dashboard">
-      <div className="dashboard-header">
-        <h2>Dashboard Proveedor de Servicio</h2>
-        <p>Gestiona tus servicios y cotizaciones en Market del Este</p>
+    <div className="role-dashboard provider-dashboard">
+      <div className="dashboard-header white-panel">
+        <div className="dashboard-heading">
+          <h2>Gestiona tus servicios como proveedor</h2>
+          <h2>Gestiona tus servicios como proveedor</h2>
+          <p>Monitorea tus cotizaciones y el estado de cada servicio en curso.</p>
+        </div>
       </div>
-
-      <div className="dashboard-actions">
-        <button 
-          onClick={handleVerServicios}
-          className="action-btn primary-btn"
-        >
+      <div className="header-actions inline">
+        <button onClick={handleVerServicios} className="action-btn primary-btn compact">
           Ver servicios disponibles
         </button>
-        <button
-          onClick={handleVerHistorial}
-          className="action-btn secondary-btn"
-        >
-          Ver historial de servicios
+        <button onClick={handleVerHistorial} className="action-btn secondary-btn compact">
+          Ver historial
         </button>
-        <button
-          onClick={handlePublicarServicio}
-          className="action-btn secondary-btn"
-        >
-          Publicar servicio propio
-        </button>
+      </div>
+
+      <div className="services-summary below-actions">
+        <div className="summary-card">
+          <span>Total gestionados</span>
+          <strong>{providerServices.length}</strong>
+        </div>
+        <div className="summary-card">
+          <span>Cotizados</span>
+          <strong>{cotizadosCount}</strong>
+        </div>
+        <div className="summary-card">
+          <span>Asignados</span>
+          <strong>{asignadosCount}</strong>
+        </div>
+        <div className="summary-card">
+          <span>Finalizados</span>
+          <strong>{finalizadosCount}</strong>
+        </div>
       </div>
 
       <div className="dashboard-content">
         <div className="content-section">
-          <h3>Mis servicios activos</h3>
-          {myServices.length > 0 ? (
-            <div className="services-list">
-              {myServices.map((service) => (
-                <div key={service.id} className="service-item">
-                  <h4>{service.title}</h4>
-                  <p>{service.description}</p>
-                  <div className="service-meta">
-                    <span>📍 {service.location}</span>
-                    <span>📅 {service.date}</span>
-                    <span className={`status-badge ${getStatusClass(service.status)}`}>
-                      {service.status}
-                    </span>
-                  </div>
-                  {service.rating != null && (
-                    <div className="service-rating-chip">
-                      ⭐ Valoración: {service.rating}/5
-                    </div>
-                  )}
-                  <div className="service-item-footer">
-                    <div className="chips-group">
-                      <span className="quote-chip">
-                        {service.quotes?.filter(q => q.serviceProviderId === state.currentUser.id).length || 0} mis cotizaciones
-                      </span>
-                      <span className="offer-chip">
-                        {state.supplyOffers?.length || 0} packs de insumos
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      className="link-btn"
-                      onClick={() => navigate(`/services/${service.id}`)}
-                    >
-                      Ver detalle →
-                    </button>
-                  </div>
-                </div>
+          <div className="services-filter-header">
+            <h3>Servicios gestionados</h3>
+            <div className="filter-pills">
+              {filters.map(({ key, label }) => (
+                <button
+                  key={key}
+                  type="button"
+                  className={`filter-pill ${serviceFilter === key ? 'active' : ''}`}
+                  onClick={() => setServiceFilter(key)}
+                >
+                  {label}
+                </button>
               ))}
+            </div>
+          </div>
+
+          {orderedServices.length > 0 ? (
+            <div className="services-list condensed">
+              {orderedServices.map((service) => {
+                const myQuote = getMyQuoteForService(service);
+                return (
+                  <div key={service.id} className="service-item compact">
+                    <div className="service-summary">
+                      <h4>{service.title}</h4>
+                    </div>
+                    <p className="service-short">{service.description}</p>
+                    <div className="service-meta mini">
+                      <span>📅 {service.date}</span>
+                      <span>📍 {service.location}</span>
+                      {myQuote?.deadline && <span>⏳ {myQuote.deadline}</span>}
+                    </div>
+                    {myQuote && (
+                      <div className="service-meta provider-chip mini">
+                        <span>
+                          💰 Mi oferta:{' '}
+                          {`USD ${myQuote.price.toLocaleString('es-UY', {
+                            minimumFractionDigits: 2,
+                          })}`}
+                        </span>
+                      </div>
+                    )}
+                    {service.rating != null && (
+                      <div className="service-rating-chip small">
+                        ⭐ {getRatingLabel(service.rating)}
+                      </div>
+                    )}
+                    <div className="service-item-footer">
+                      <div className="chips-group">
+                        <span className="quote-chip">
+                          {myQuote ? 'Cotización enviada' : 'Sin cotización'}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        className="link-btn"
+                        onClick={() => navigate(`/services/${service.id}`)}
+                      >
+                        Ver detalle →
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <div className="empty-state">
-              <p>Aún no has cotizado ningún servicio.</p>
+              <p>No hay servicios para el filtro seleccionado.</p>
               <button onClick={handleVerServicios} className="link-btn">
-                Buscar servicios para cotizar
-              </button>
-            </div>
-          )}
-        </div>
-
-        <div className="content-section">
-          <h3>Servicios asignados</h3>
-          {myAssignedServices.length > 0 ? (
-            <div className="services-list">
-              {myAssignedServices.map((service) => (
-                <div key={service.id} className="service-item">
-                  <h4>{service.title}</h4>
-                  <p>{service.description}</p>
-                  <div className="service-meta">
-                    <span>📍 {service.location}</span>
-                    <span>📅 {service.date}</span>
-                    <span className={`status-badge ${getStatusClass(service.status)}`}>
-                      {service.status}
-                    </span>
-                  </div>
-                  <div className="service-item-footer">
-                    <div className="chips-group">
-                      <span className="quote-chip">
-                        {service.quotes?.filter(q => q.serviceProviderId === state.currentUser.id).length || 0} mis cotizaciones
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      className="link-btn"
-                      onClick={() => navigate(`/services/${service.id}`)}
-                    >
-                      Ver detalle →
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="empty-state">
-              <p>Aún no tienes servicios asignados.</p>
-              <button onClick={handleVerHistorial} className="link-btn">
-                Revisar historial
-              </button>
-            </div>
-          )}
-        </div>
-
-        <div className="content-section">
-          <h3>Servicios completados</h3>
-          {myFinalizedServices.length > 0 ? (
-            <div className="services-list">
-              {myFinalizedServices.map((service) => (
-                <div key={service.id} className="service-item">
-                  <h4>{service.title}</h4>
-                  <p>{service.description}</p>
-                  <div className="service-meta">
-                    <span>📍 {service.location}</span>
-                    <span>📅 {service.date}</span>
-                    <span className={`status-badge ${getStatusClass(service.status)}`}>
-                      {service.status}
-                    </span>
-                  </div>
-                  <div className="service-item-footer">
-                    <div className="chips-group">
-                      <span className="quote-chip">
-                        {service.quotes?.filter(q => q.serviceProviderId === state.currentUser.id).length || 0} mis cotizaciones
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      className="link-btn"
-                      onClick={() => navigate(`/services/${service.id}`)}
-                    >
-                      Ver detalle →
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="empty-state">
-              <p>Todavía no tienes servicios completados.</p>
-              <button onClick={handleVerHistorial} className="link-btn">
-                Revisar historial
-              </button>
-            </div>
-          )}
-        </div>
-
-        <div className="content-section">
-          <h3>Mis cotizaciones</h3>
-          {myQuotes.length > 0 ? (
-            <ul className="quotes-overview">
-              {myQuotes.map((quote) => (
-                <li key={quote.id} className="quotes-overview-item">
-                  <div>
-                    <h4>{quote.serviceTitle}</h4>
-                    <p>
-                      Oferta: <strong>USD {quote.price.toLocaleString('es-UY', { minimumFractionDigits: 2 })}</strong>
-                    </p>
-                    <p className="quote-meta">
-                      ⏳ Plazo: {quote.deadline} · Estado del servicio: {quote.serviceStatus}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    className="link-btn"
-                    onClick={() => navigate(`/services/${quote.serviceId}`)}
-                  >
-                    Ver detalle →
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <div className="empty-state">
-              <p>Aún no has enviado cotizaciones.</p>
-              <button onClick={handleVerServicios} className="link-btn">
-                Buscar servicios para cotizar
+                Buscar servicios disponibles
               </button>
             </div>
           )}
@@ -449,28 +409,28 @@ const ProveedorInsumosDashboard = () => {
     (offer) => offer.providerId === state.currentUser.id
   );
 
-  const handleVerServicios = () => {
-    navigate('/services');
+  const handlePublicarPack = () => {
+    navigate('/supplies/create');
   };
 
   return (
     <div className="role-dashboard">
-      <div className="dashboard-header">
-        <h2>Dashboard Proveedor de Insumos</h2>
-        <p>Gestiona tus packs de insumos en Market del Este</p>
+      <div className="dashboard-header white-panel with-actions">
+        <div className="dashboard-heading">
+          <h2>Gestiona tus packs de insumos</h2>
+          <p>Centraliza tus ofertas publicadas y mantenlas actualizadas.</p>
+        </div>
+      </div>
+      <div className="header-actions inline">
+        <button onClick={handlePublicarPack} className="action-btn primary-btn compact">
+          Publicar pack de insumos
+        </button>
       </div>
 
-      <div className="dashboard-content supply-dashboard">
-        <div className="content-section">
-          <SupplyOfferForm />
-        </div>
-
+      <div className="dashboard-content supply-dashboard single-column">
         <div className="content-section">
           <div className="section-header">
             <h3>Mis Ofertas Publicadas</h3>
-            <button onClick={handleVerServicios} className="link-btn">
-              Ver servicios publicados
-            </button>
           </div>
 
           {myOffers.length > 0 ? (
@@ -509,7 +469,7 @@ const ProveedorInsumosDashboard = () => {
             <div className="empty-state">
               <p>No tienes ofertas publicadas</p>
               <span className="hint-text">
-                Crea tu primera oferta usando el formulario.
+                Crea tu primera oferta usando el botón de arriba.
               </span>
             </div>
           )}

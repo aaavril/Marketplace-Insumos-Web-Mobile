@@ -133,22 +133,69 @@ export const AppReducer = (state, action) => {
      * MARK_AS_COMPLETED - Marca un servicio como completado y guarda una valoración
      * payload: { serviceId: string, rating?: number | null }
      */
-    case 'MARK_AS_COMPLETED':
+    case 'MARK_AS_COMPLETED': {
+      const { serviceId, rating: ratingValue } = action.payload;
+      const targetService = state.services.find((service) => service.id === serviceId);
+
+      if (!targetService) {
+        return state;
+      }
+
+      let updatedUsers = state.users;
+
+      if (
+        typeof ratingValue === 'number' &&
+        targetService.selectedQuoteId
+      ) {
+        const selectedQuote = targetService.quotes?.find(
+          (quote) => quote.id === targetService.selectedQuoteId
+        );
+
+        if (selectedQuote) {
+          updatedUsers = state.users.map((user) => {
+            if (user.id !== selectedQuote.serviceProviderId) {
+              return user;
+            }
+
+            const currentSum =
+              typeof user.ratingSum === 'number'
+                ? user.ratingSum
+                : (typeof user.averageRating === 'number' && typeof user.ratingCount === 'number'
+                    ? user.averageRating * user.ratingCount
+                    : 0);
+            const currentCount =
+              typeof user.ratingCount === 'number' ? user.ratingCount : 0;
+
+            const newRatingSum = currentSum + ratingValue;
+            const newRatingCount = currentCount + 1;
+            const newAverageRating = newRatingSum / newRatingCount;
+
+            return {
+              ...user,
+              ratingSum: newRatingSum,
+              ratingCount: newRatingCount,
+              averageRating: Number.isFinite(newAverageRating) ? newAverageRating : 0,
+            };
+          });
+        }
+      }
+
+      const updatedServices = state.services.map((service) =>
+        service.id === serviceId
+          ? {
+              ...service,
+              status: 'Completado',
+              rating: typeof ratingValue === 'number' ? ratingValue : service.rating ?? null,
+            }
+          : service
+      );
+
       return {
         ...state,
-        services: state.services.map(service =>
-          service.id === action.payload.serviceId
-            ? {
-                ...service,
-                status: 'Completado',
-                rating:
-                  typeof action.payload.rating === 'number'
-                    ? action.payload.rating
-                    : null
-              }
-            : service
-        )
+        services: updatedServices,
+        users: updatedUsers,
       };
+    }
     
     default:
       return state;

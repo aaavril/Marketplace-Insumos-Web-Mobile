@@ -124,6 +124,20 @@
   font-size: 0.95rem;
 }
 
+.rating-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.rating-count {
+  font-size: 0.85rem;
+  color: #475569;
+  font-weight: 500;
+}
+
 .comparator-table tbody tr.selected td:nth-child(5) {
   font-weight: 700;
   color: #1d4ed8;

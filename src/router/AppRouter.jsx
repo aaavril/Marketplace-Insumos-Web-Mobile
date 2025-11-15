@@ -6,6 +6,7 @@ import LoginPage from '../pages/LoginPage';
 import SignUpPage from '../pages/SignUpPage';
 import DashboardPage from '../pages/DashboardPage';
 import CreateServicePage from '../pages/CreateServicePage';
+import CreateSupplyOfferPage from '../pages/CreateSupplyOfferPage';
 import ServicesListPage from '../pages/ServicesListPage';
 import ServiceDetailPage from '../pages/ServiceDetailPage';
 import ServiceHistoryPage from '../pages/ServiceHistoryPage';
@@ -69,6 +70,15 @@ const AppRouter = () => {
           element={
             <ProtectedRoute>
               <CreateServicePage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/supplies/create"
+          element={
+            <ProtectedRoute>
+              <CreateSupplyOfferPage />
             </ProtectedRoute>
           }
         />

@@ -27,6 +27,8 @@
   font-size: 1.25rem;
   font-weight: 700;
   color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .header-content {

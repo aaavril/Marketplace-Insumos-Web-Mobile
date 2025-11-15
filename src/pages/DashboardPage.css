@@ -35,7 +35,7 @@
 }
 
 .dashboard-main {
-  max-width: 1200px;
+  width: min(1400px, 95vw);
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -45,12 +45,11 @@
 .dashboard-footer {
   text-align: center;
   color: white;
-  margin-top: 3rem;
   padding: 1.5rem;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   backdrop-filter: blur(10px);
-  max-width: 1200px;
+  width: min(1400px, 95vw);
   margin: 3rem auto 0;
 }
 

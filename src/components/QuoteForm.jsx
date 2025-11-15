@@ -79,7 +79,7 @@ const QuoteForm = ({ serviceId }) => {
     <div className="quote-form-card">
       <h3>Enviar Cotización</h3>
       <p className="quote-form-subtitle">
-        Completa los datos para cotizar este servicio en Market del Este
+        Completa los datos para cotizar este servicio en MARKET DEL ESTE
       </p>
 
       {success && (

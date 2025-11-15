@@ -15,15 +15,56 @@
   border-bottom: 2px solid #f0f0f0;
 }
 
+.dashboard-header.white-panel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-align: left;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 1.75rem 2rem;
+  margin-bottom: 2.5rem;
+  border-bottom: none;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+  gap: 2rem;
+}
+
+.dashboard-header.white-panel h2 {
+  margin: 0;
+}
+
+.dashboard-heading {
+  flex: 1;
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.header-actions.inline {
+  flex-wrap: nowrap;
+}
+
+.header-actions.inline button {
+  margin-right: 0.5rem;
+}
+
 .dashboard-header h2 {
-  color: #333;
-  font-size: 2rem;
-  margin-bottom: 0.5rem;
+  color: #1f2937;
+  font-size: 1.9rem;
+  margin: 0;
+  font-weight: 700;
 }
 
 .dashboard-header p {
   color: #666;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
+  margin: 0.35rem 0 0;
 }
 
 .dashboard-actions {
@@ -55,6 +96,11 @@
   box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
 }
 
+.action-btn.compact {
+  min-width: auto;
+  padding: 0.85rem 1.5rem;
+}
+
 .secondary-btn {
   background: white;
   color: #667eea;
@@ -75,7 +121,11 @@
 }
 
 .dashboard-content.supply-dashboard {
-  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  grid-template-columns: 1fr;
+}
+
+.dashboard-content.single-column {
+  grid-template-columns: 1fr;
 }
 
 .content-section {
@@ -306,6 +356,144 @@
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
+}
+
+.services-solicitados-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.btn-toggle-past {
+  padding: 0.6rem 1.25rem;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  background: white;
+  color: #1d4ed8;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-toggle-past:hover {
+  background: rgba(37, 99, 235, 0.08);
+  color: #1e3a8a;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.1);
+}
+
+.services-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.services-summary.below-actions {
+  margin-bottom: 2rem;
+}
+
+.services-filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+
+.filter-pills {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  background: #f1f5f9;
+  padding: 0.4rem;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+}
+
+.filter-pill {
+  border: none;
+  background: transparent;
+  color: #475569;
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.45rem 0.95rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-pill:hover {
+  background: rgba(37, 99, 235, 0.08);
+  color: #1d4ed8;
+}
+
+.filter-pill.active {
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+  color: white;
+  box-shadow: 0 6px 15px rgba(59, 130, 246, 0.25);
+}
+
+.summary-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.summary-card span {
+  font-size: 0.85rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.summary-card strong {
+  font-size: 1.4rem;
+  color: #1e293b;
+}
+
+.services-list.condensed .service-item {
+  padding: 1rem;
+}
+
+.services-list.compact .service-item {
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+}
+
+.service-item.compact .service-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.service-item.compact .service-short {
+  color: #475569;
+  font-size: 0.9rem;
+  margin: 0.35rem 0;
+}
+
+.service-meta.mini {
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+.service-rating-chip.small {
+  padding: 0.3rem 0.7rem;
+  font-size: 0.8rem;
+}
+
+.past-list {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 1rem;
 }
 
 .quotes-overview {

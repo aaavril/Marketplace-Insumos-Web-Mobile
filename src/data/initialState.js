@@ -11,28 +11,40 @@ export const MOCK_USERS = [
     name: 'Alfonso Solicitante', 
     email: 'solicitante@mail.com', 
     password: '123', 
-    role: 'Solicitante' 
+    role: 'Solicitante',
+    averageRating: 0,
+    ratingSum: 0,
+    ratingCount: 0,
   },
   { 
     id: 'u2', 
     name: 'Laura Proveedora', 
     email: 'servicio@mail.com', 
     password: '123', 
-    role: 'Proveedor de Servicio' 
+    role: 'Proveedor de Servicio',
+    averageRating: 4.5,
+    ratingSum: 9,
+    ratingCount: 2,
   },
   { 
     id: 'u3', 
     name: 'Pedro Insumos', 
     email: 'insumos@mail.com', 
     password: '123', 
-    role: 'Proveedor de Insumos' 
+    role: 'Proveedor de Insumos',
+    averageRating: 0,
+    ratingSum: 0,
+    ratingCount: 0,
   },
   { 
     id: 'u4', 
     name: 'Mariana Servicios', 
     email: 'serviciosplus@mail.com', 
     password: '123', 
-    role: 'Proveedor de Servicio' 
+    role: 'Proveedor de Servicio',
+    averageRating: 4.0,
+    ratingSum: 4,
+    ratingCount: 1,
   },
 ];
 

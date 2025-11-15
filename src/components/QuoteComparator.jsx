@@ -9,12 +9,16 @@ import './QuoteComparator.css';
 const QuoteComparator = ({
   quotes = [],
   getProviderName,
+  users = [],
   onClose,
   selectedQuoteId,
   completedRatingLabel = null,
   serviceStatus = '',
 }) => {
   const [sortOption, setSortOption] = useState('price');
+
+  const getProviderProfile = (providerId) =>
+    users.find((user) => user.id === providerId);
 
   const getDurationValue = (quote) => {
     if (typeof quote.duration === 'number' && !Number.isNaN(quote.duration)) {
@@ -77,6 +81,7 @@ const QuoteComparator = ({
             <thead>
               <tr>
                 <th>Proveedor</th>
+                <th>Rating</th>
                 <th>Precio (USD)</th>
                 <th>Duración (días)</th>
                 <th>Plazo estimado</th>
@@ -88,6 +93,13 @@ const QuoteComparator = ({
             <tbody>
               {sortedQuotes.map((quote) => {
                 const isSelected = selectedQuoteId === quote.id;
+                const providerProfile = getProviderProfile(quote.serviceProviderId);
+                const providerHasRatings =
+                  providerProfile && (providerProfile.ratingCount ?? 0) > 0;
+                const providerRatingLabel = providerHasRatings
+                  ? `⭐ ${Number(providerProfile.averageRating || 0).toFixed(1)}/5`
+                  : 'Sin valoraciones';
+
                 let stateLabel = 'Disponible';
                 if (isSelected) {
                   if (serviceStatus === 'Completado') {
@@ -109,6 +121,14 @@ const QuoteComparator = ({
                     className={isSelected ? 'selected' : undefined}
                   >
                     <td>{getProviderName(quote.serviceProviderId)}</td>
+                    <td className="rating-cell">
+                      {providerRatingLabel}
+                      {providerHasRatings && (
+                        <span className="rating-count">
+                          ({providerProfile.ratingCount})
+                        </span>
+                      )}
+                    </td>
                     <td>{quote.price.toLocaleString('es-UY', { minimumFractionDigits: 2 })}</td>
                     <td>
                       {quote.duration

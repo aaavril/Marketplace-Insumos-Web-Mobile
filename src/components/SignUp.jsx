@@ -92,7 +92,7 @@ const SignUp = () => {
     <div className="signup-container">
       <div className="signup-card">
         <div className="signup-header">
-          <h1>Market del Este</h1>
+          <h1>MARKET DEL ESTE</h1>
           <p>Crea tu cuenta para comenzar</p>
         </div>
 

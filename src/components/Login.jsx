@@ -50,7 +50,7 @@ const Login = () => {
       <div className="login-card">
         <div className="login-header">
           <div className="login-logo">
-            <h1>Market del Este</h1>
+            <h1>MARKET DEL ESTE</h1>
             <p className="logo-subtitle">Marketplace de Punta del Este</p>
           </div>
           <p className="login-subtitle">Inicia sesión para continuar</p>

@@ -1,11 +1,8 @@
 import { useNavigate } from 'react-router-dom';
-import ServiceForm from '../components/ServiceForm';
-import './CreateServicePage.css';
+import SupplyOfferForm from '../components/SupplyOfferForm';
+import './CreateSupplyOfferPage.css';
 
-/**
- * CreateServicePage - Página para crear una nueva solicitud de servicio
- */
-const CreateServicePage = () => {
+const CreateSupplyOfferPage = () => {
   const navigate = useNavigate();
 
   const handleBack = () => {
@@ -13,7 +10,7 @@ const CreateServicePage = () => {
   };
 
   return (
-    <div className="create-service-page">
+    <div className="create-supply-page">
       <div className="page-header">
         <div className="header-top">
           <button onClick={handleBack} className="btn-back">
@@ -24,17 +21,19 @@ const CreateServicePage = () => {
           </div>
         </div>
         <div className="header-content">
-          <h1>Crear Nueva Solicitud de Servicio</h1>
+          <h1>Crear Nuevo Pack de Insumos</h1>
           <p className="page-description">
-            Publica tu necesidad de servicio o insumos en Punta del Este
+            Publica tus packs y describe claramente los insumos incluidos y su precio total.
           </p>
         </div>
       </div>
-      <ServiceForm />
+
+      <div className="form-wrapper">
+        <SupplyOfferForm />
+      </div>
     </div>
   );
 };
 
-export default CreateServicePage;
-
+export default CreateSupplyOfferPage;
 

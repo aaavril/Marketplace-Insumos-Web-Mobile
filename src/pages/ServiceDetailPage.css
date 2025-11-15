@@ -5,7 +5,7 @@
 }
 
 .detail-header {
-  max-width: 1200px;
+  max-width: min(1400px, 95vw);
   margin: 0 auto 2rem;
   display: flex;
   justify-content: space-between;
@@ -35,14 +35,16 @@
   font-size: 1.1rem;
   font-weight: 700;
   color: #2563eb;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .detail-content {
-  max-width: 1200px;
+  max-width: min(1400px, 95vw);
   margin: 0 auto;
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-  gap: 2rem;
+  grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr);
+  gap: 2.25rem;
 }
 
 .detail-card {
@@ -210,6 +212,49 @@
   background: linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(59, 130, 246, 0.16));
   border-color: rgba(37, 99, 235, 0.2);
   color: #1d4ed8;
+}
+
+.selected-provider-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.25rem 1.5rem;
+  border-radius: 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 1.5rem;
+}
+
+.selected-provider-card h3 {
+  margin: 0.35rem 0 0;
+  color: #0f172a;
+}
+
+.card-label {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #2563eb;
+  font-weight: 700;
+}
+
+.provider-rating-resume {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+
+.provider-rating-value {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #1d4ed8;
+}
+
+.provider-rating-count {
+  font-size: 0.9rem;
+  color: #475569;
 }
 
 .quotes-header {
@@ -400,6 +445,12 @@
 .quote-provider {
   font-weight: 600;
   color: #1e293b;
+}
+
+.quote-provider-rating {
+  font-size: 0.85rem;
+  color: #475569;
+  font-weight: 500;
 }
 
 .quote-price {

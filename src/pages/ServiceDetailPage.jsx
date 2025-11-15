@@ -23,6 +23,16 @@ const ServiceDetailPage = () => {
     [state.services, id]
   );
 
+  const selectedQuote = useMemo(() => {
+    if (!service?.selectedQuoteId) return null;
+    return service.quotes?.find((quote) => quote.id === service.selectedQuoteId) ?? null;
+  }, [service]);
+
+  const selectedProvider = useMemo(() => {
+    if (!selectedQuote) return null;
+    return state.users.find((user) => user.id === selectedQuote.serviceProviderId) ?? null;
+  }, [selectedQuote, state.users]);
+
   const supplyOffers = state.supplyOffers || [];
 
   const solicitanteName = useMemo(() => {
@@ -70,7 +80,7 @@ const ServiceDetailPage = () => {
   };
 
   const handleBack = () => {
-    navigate('/services');
+    navigate('/dashboard');
   };
 
   if (!service) {
@@ -101,15 +111,26 @@ const ServiceDetailPage = () => {
     1: '⭐ Deficiente',
   };
   const ratingLabel = serviceRating ? ratingLabels[serviceRating] || `${serviceRating}/5` : null;
+  const selectedProviderName =
+    selectedProvider?.name ||
+    (selectedQuote ? getProviderName(selectedQuote.serviceProviderId) : null);
+  const providerAverageRating =
+    selectedProvider && typeof selectedProvider.averageRating === 'number'
+      ? selectedProvider.averageRating
+      : null;
+  const providerRatingCount = selectedProvider?.ratingCount ?? 0;
+
+  const getProviderProfile = (providerId) =>
+    state.users.find((user) => user.id === providerId) ?? null;
 
   return (
     <div className="service-detail-page">
       <div className="detail-header">
         <button onClick={handleBack} className="btn-back">
-          ← Volver a servicios
+          ← Volver al dashboard
         </button>
         <div className="detail-brand">
-          <span className="brand-name">Market del Este</span>
+          <span className="brand-name">MARKET DEL ESTE</span>
         </div>
       </div>
 
@@ -188,25 +209,40 @@ const ServiceDetailPage = () => {
               {isAssigned && selectedQuoteId && !isCompleted && (
                 <div className="selection-banner">
                   Has asignado este servicio a{' '}
-                  <strong>
-                    {getProviderName(
-                      service.quotes.find((quote) => quote.id === selectedQuoteId)?.serviceProviderId
-                    )}
-                  </strong>. Marca como completado cuando el trabajo esté completo.
+                  <strong>{selectedProviderName}</strong>. Marca como completado cuando el trabajo esté completo.
                 </div>
               )}
               {isCompleted && selectedQuoteId && (
                 <div className="selection-banner finalized">
                   Servicio completado con la propuesta de{' '}
-                  <strong>
-                    {getProviderName(
-                      service.quotes.find((quote) => quote.id === selectedQuoteId)?.serviceProviderId
-                    )}
-                  </strong>
+                  <strong>{selectedProviderName}</strong>
                   {serviceRating != null
                     ? ` · Valoración otorgada: ${ratingLabel}`
                     : ' · Sin valoración registrada.'}{' '}
-                  ¡Gracias por confiar en Market del Este!
+                  ¡Gracias por confiar en MARKET DEL ESTE!
+                </div>
+              )}
+
+              {(isAssigned || isCompleted) && selectedProvider && (
+                <div className="selected-provider-card">
+                  <div>
+                    <span className="card-label">Proveedor seleccionado</span>
+                    <h3>{selectedProvider.name}</h3>
+                  </div>
+                  <div className="provider-rating-resume">
+                    <span className="provider-rating-value">
+                      ⭐{' '}
+                      {providerAverageRating != null
+                        ? providerAverageRating.toFixed(1)
+                        : '0.0'}
+                      /5
+                    </span>
+                    <span className="provider-rating-count">
+                      {providerRatingCount > 0
+                        ? `${providerRatingCount} valoración${providerRatingCount === 1 ? '' : 'es'}`
+                        : 'Sin valoraciones registradas'}
+                    </span>
+                  </div>
                 </div>
               )}
 
@@ -220,6 +256,17 @@ const ServiceDetailPage = () => {
                       <div className="quote-header">
                         <span className="quote-provider">
                           {getProviderName(quote.serviceProviderId)}
+                        </span>
+                        <span className="quote-provider-rating">
+                          {(() => {
+                            const profile = getProviderProfile(quote.serviceProviderId);
+                            if (profile?.ratingCount > 0) {
+                              return `⭐ ${Number(profile.averageRating || 0).toFixed(1)} · ${
+                                profile.ratingCount
+                              } valoración${profile.ratingCount === 1 ? '' : 'es'}`;
+                            }
+                            return 'Sin valoraciones';
+                          })()}
                         </span>
                         <span className="quote-price">
                           USD {quote.price.toLocaleString('es-UY', { minimumFractionDigits: 2 })}
@@ -270,6 +317,7 @@ const ServiceDetailPage = () => {
                 <QuoteComparator
                   quotes={service.quotes}
                   getProviderName={getProviderName}
+                  users={state.users}
                   onClose={handleCloseComparator}
                   selectedQuoteId={selectedQuoteId}
                   completedRatingLabel={ratingLabel}

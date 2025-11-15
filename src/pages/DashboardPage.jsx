@@ -22,7 +22,7 @@ const DashboardPage = () => {
       <header className="dashboard-header">
         <div className="header-content">
           <div className="dashboard-brand">
-            <h1 className="dashboard-logo">Market del Este</h1>
+            <h1 className="dashboard-logo">MARKET DEL ESTE</h1>
             <p className="dashboard-tagline">Marketplace de Punta del Este</p>
           </div>
           <div className="header-actions">
@@ -41,7 +41,7 @@ const DashboardPage = () => {
 
       <footer className="dashboard-footer">
         <div className="footer-content">
-          <p className="footer-brand">Market del Este</p>
+          <p className="footer-brand">MARKET DEL ESTE</p>
           <p className="footer-info">Rol: {state.currentUser?.role} | Autenticación activa</p>
         </div>
       </footer>

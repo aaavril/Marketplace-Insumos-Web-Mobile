@@ -221,67 +221,7 @@
   transform: translateX(4px);
 }
 
-/* Hero Image / Floating Cards */
-.hero-image {
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 400px;
-  height: 500px;
-  pointer-events: none;
-}
-
-.floating-card {
-  position: absolute;
-  background: white;
-  border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  animation: float 6s ease-in-out infinite;
-}
-
-.card-1 {
-  top: 10%;
-  right: 10%;
-  animation-delay: 0s;
-}
-
-.card-2 {
-  top: 50%;
-  right: 30%;
-  animation-delay: 2s;
-}
-
-.card-3 {
-  bottom: 10%;
-  right: 15%;
-  animation-delay: 4s;
-}
-
-.card-icon {
-  font-size: 2.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.card-title {
-  font-weight: 600;
-  color: #1e293b;
-  font-size: 0.95rem;
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-20px);
-  }
-}
+/* Hero Project Cards removed */
 
 /* Features Section */
 .features-section {
@@ -607,9 +547,6 @@
     gap: 1.5rem;
   }
 
-  .hero-image {
-    display: none;
-  }
 
   .section-title {
     font-size: 2rem;
@@ -658,4 +595,5 @@
     font-size: 0.9rem;
   }
 }
+
 
