@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useAppState } from '../context/GlobalStateContext';
+import { useAppState } from '@core-logic/context/GlobalStateContext';
 import './ServiceList.css';
 
 /**

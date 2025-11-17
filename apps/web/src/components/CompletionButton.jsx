@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAppState } from '../context/GlobalStateContext';
+import { useAppState } from '@core-logic/context/GlobalStateContext';
 import './CompletionButton.css';
 
 const ratingOptions = [

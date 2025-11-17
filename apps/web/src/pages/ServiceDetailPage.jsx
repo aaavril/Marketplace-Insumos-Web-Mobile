@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useAppState } from '../context/GlobalStateContext';
-import { useAuth } from '../context/AuthContext';
+import { useAppState } from '@core-logic/context/GlobalStateContext';
+import { useAuth } from '@core-logic/context/AuthContext';
 import QuoteForm from '../components/QuoteForm';
 import QuoteComparator from '../components/QuoteComparator';
 import CompletionButton from '../components/CompletionButton';

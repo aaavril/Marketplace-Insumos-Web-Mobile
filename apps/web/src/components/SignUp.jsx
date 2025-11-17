@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { useAppState } from '../context/GlobalStateContext';
-import { saveRegisteredUser } from '../services/AuthService';
+import { useAuth } from '@core-logic/context/AuthContext';
+import { useAppState } from '@core-logic/context/GlobalStateContext';
+import { saveRegisteredUser } from '@core-logic/services/AuthService';
 import './SignUp.css';
 
 /**

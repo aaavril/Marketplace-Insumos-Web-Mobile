@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '@core-logic/context/AuthContext';
 import './LandingPage.css';
 
 /**

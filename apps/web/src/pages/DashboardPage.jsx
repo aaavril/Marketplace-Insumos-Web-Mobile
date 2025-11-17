@@ -1,5 +1,5 @@
-import { useAppState } from '../context/GlobalStateContext';
-import { useAuth } from '../context/AuthContext';
+import { useAppState } from '@core-logic/context/GlobalStateContext';
+import { useAuth } from '@core-logic/context/AuthContext';
 import RoleDashboard from '../components/RoleDashboard';
 import './DashboardPage.css';
 
