@@ -1,18 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert } from 'react-native';
 import { useAppState } from '../../../../packages/core-logic/src/context/GlobalStateContext';
 import { login } from '../../../../packages/core-logic/src/services/AuthService';
 
 /**
  * LoginScreen - Pantalla de inicio de sesión
- * F6.HU2: Implementa login con AuthService y dispatch SET_CURRENT_USER
- * Permite a los usuarios autenticarse en la aplicación móvil
  */
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { dispatch } = useAppState();
+  const { state, dispatch } = useAppState();
+  const currentUser = state.currentUser;
+
+  // Navegar automáticamente cuando el usuario se autentique
+  useEffect(() => {
+    if (currentUser && navigation) {
+      navigation.replace('Dashboard');
+    }
+  }, [currentUser, navigation]);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -22,14 +28,8 @@ export default function LoginScreen({ navigation }) {
 
     setLoading(true);
     try {
-      // F6.HU2: Usar AuthService.login del core-logic
       const userData = await login(email, password);
-      
-      // F6.HU2: Dispatch SET_CURRENT_USER al reducer compartido
       dispatch({ type: 'SET_CURRENT_USER', payload: userData });
-      
-      // La navegación se manejará automáticamente por AppNavigator
-      // al detectar que currentUser ya no es null
     } catch (error) {
       Alert.alert('Error', error.message || 'No se pudo iniciar sesión. Intenta nuevamente.');
     } finally {
