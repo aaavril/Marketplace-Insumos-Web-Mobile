@@ -36,9 +36,21 @@ export default function MenuDrawer({ visible, onClose, onLogout, navigation }) {
         }
         break;
       case 'create':
-        // Navegar a crear servicio
+        // Navegar a crear servicio (Solicitante)
         if (navigation) {
           navigation.navigate('ServiceForm');
+        }
+        break;
+      case 'availableServices':
+        // Navegar a servicios disponibles (Proveedor de Servicio)
+        if (navigation) {
+          navigation.navigate('ServiceList');
+        }
+        break;
+      case 'createOffer':
+        // Navegar a crear oferta de pack (Proveedor de Insumos)
+        if (navigation) {
+          navigation.navigate('SupplyOfferForm');
         }
         break;
       case 'logout':
@@ -84,21 +96,75 @@ export default function MenuDrawer({ visible, onClose, onLogout, navigation }) {
 
                 {/* Opciones del menú */}
                 <View style={styles.menuSection}>
-                  <TouchableOpacity
-                    style={styles.menuItem}
-                    onPress={() => handleMenuOption('services')}
-                  >
-                    <Text style={styles.menuIcon}>📋</Text>
-                    <Text style={styles.menuText}>Mis Servicios</Text>
-                  </TouchableOpacity>
+                  {currentUser?.role === 'Solicitante' ? (
+                    <>
+                      <TouchableOpacity
+                        style={styles.menuItem}
+                        onPress={() => handleMenuOption('services')}
+                      >
+                        <Text style={styles.menuIcon}>📋</Text>
+                        <Text style={styles.menuText}>Mis Servicios</Text>
+                      </TouchableOpacity>
 
-                  <TouchableOpacity
-                    style={styles.menuItem}
-                    onPress={() => handleMenuOption('create')}
-                  >
-                    <Text style={styles.menuIcon}>➕</Text>
-                    <Text style={styles.menuText}>Publicar Servicio</Text>
-                  </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.menuItem}
+                        onPress={() => handleMenuOption('create')}
+                      >
+                        <Text style={styles.menuIcon}>➕</Text>
+                        <Text style={styles.menuText}>Publicar Servicio</Text>
+                      </TouchableOpacity>
+                    </>
+                  ) : (
+                    <>
+                      {currentUser?.role === 'Proveedor de Servicio' && (
+                        <TouchableOpacity
+                          style={styles.menuItem}
+                          onPress={() => handleMenuOption('services')}
+                        >
+                          <Text style={styles.menuIcon}>📋</Text>
+                          <Text style={styles.menuText}>Mis Servicios</Text>
+                        </TouchableOpacity>
+                      )}
+
+                      {currentUser?.role === 'Proveedor de Servicio' && (
+                        <TouchableOpacity
+                          style={styles.menuItem}
+                          onPress={() => handleMenuOption('availableServices')}
+                        >
+                          <Text style={styles.menuIcon}>🔍</Text>
+                          <Text style={styles.menuText}>Servicios Disponibles</Text>
+                        </TouchableOpacity>
+                      )}
+
+                      {currentUser?.role === 'Proveedor de Insumos' && (
+                        <>
+                          <TouchableOpacity
+                            style={styles.menuItem}
+                            onPress={() => handleMenuOption('services')}
+                          >
+                            <Text style={styles.menuIcon}>📋</Text>
+                            <Text style={styles.menuText}>Mis Ofertas</Text>
+                          </TouchableOpacity>
+
+                          <TouchableOpacity
+                            style={styles.menuItem}
+                            onPress={() => handleMenuOption('availableServices')}
+                          >
+                            <Text style={styles.menuIcon}>🔍</Text>
+                            <Text style={styles.menuText}>Servicios Disponibles</Text>
+                          </TouchableOpacity>
+
+                          <TouchableOpacity
+                            style={styles.menuItem}
+                            onPress={() => handleMenuOption('createOffer')}
+                          >
+                            <Text style={styles.menuIcon}>📦</Text>
+                            <Text style={styles.menuText}>Publicar Pack</Text>
+                          </TouchableOpacity>
+                        </>
+                      )}
+                    </>
+                  )}
 
                   <TouchableOpacity
                     style={styles.menuItem}

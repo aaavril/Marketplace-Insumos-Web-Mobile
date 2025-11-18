@@ -10,6 +10,10 @@ import { GlobalStateProvider, useAppState } from '../../../packages/core-logic/s
 import LoginScreen from './src/screens/LoginScreen';
 import DashboardRouter from './src/screens/DashboardRouter';
 import ServiceFormScreen from './src/screens/ServiceFormScreen';
+import ServiceListScreen from './src/screens/ServiceListScreen';
+import ServiceDetailScreen from './src/screens/ServiceDetailScreen';
+import QuoteFormScreen from './src/screens/QuoteFormScreen';
+import SupplyOfferFormScreen from './src/screens/SupplyOfferFormScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -77,6 +81,10 @@ function AppNavigator() {
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Dashboard" component={DashboardRouter} />
           <Stack.Screen name="ServiceForm" component={ServiceFormScreen} />
+          <Stack.Screen name="ServiceList" component={ServiceListScreen} />
+          <Stack.Screen name="ServiceDetail" component={ServiceDetailScreen} />
+          <Stack.Screen name="QuoteForm" component={QuoteFormScreen} />
+          <Stack.Screen name="SupplyOfferForm" component={SupplyOfferFormScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     );

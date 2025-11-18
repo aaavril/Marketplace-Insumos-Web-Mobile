@@ -39,7 +39,6 @@ export default function SolicitanteDashboard({ navigation, onLogout }) {
 
   const filters = [
     { key: 'todos', label: 'Todos' },
-    { key: 'activos', label: 'Activos' },
     { key: 'solicitados', label: 'Solicitados' },
     { key: 'en-curso', label: 'En curso' },
     { key: 'finalizados', label: 'Finalizados' },
@@ -50,11 +49,6 @@ export default function SolicitanteDashboard({ navigation, onLogout }) {
     const normalizedStatus = (service.status?.toLowerCase() || '').trim();
 
     switch (serviceFilter) {
-      case 'activos':
-        return (
-          !normalizedStatus.includes('finalizado') &&
-          !normalizedStatus.includes('completado')
-        );
       case 'solicitados':
         return normalizedStatus === 'publicado';
       case 'en-curso':
@@ -91,8 +85,9 @@ export default function SolicitanteDashboard({ navigation, onLogout }) {
   }, [filteredServices, serviceFilter]);
 
   const handleServiceDetail = (serviceId) => {
-    // TODO: Navegar a detalle del servicio cuando se implemente
-    console.log('Ver detalle:', serviceId);
+    if (navigation) {
+      navigation.navigate('ServiceDetail', { serviceId });
+    }
   };
 
   return (

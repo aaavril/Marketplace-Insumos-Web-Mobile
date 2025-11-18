@@ -1,21 +1,22 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { getRatingLabel } from '../utils/helpers';
 
 /**
- * ServiceCard - Tarjeta de servicio para el dashboard
+ * PublicServiceCard - Tarjeta de servicio público para proveedores
  * @param {Object} service - Datos del servicio
- * @param {string|null} assignedProvider - Nombre del proveedor asignado
- * @param {Function} onPress - Función que se ejecuta al tocar "Ver detalle" o toda la tarjeta
+ * @param {Function} onPress - Función que se ejecuta al tocar la tarjeta
  */
-export default function ServiceCard({ service, assignedProvider, onPress }) {
+export default function PublicServiceCard({ service, onPress }) {
   const quotesCount = service.quotes?.length || 0;
-  const ratingLabel = getRatingLabel(service.rating);
+  const suppliesCount = service.requiredSupplies?.length || 0;
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.header}>
         <Text style={styles.title}>{service.title}</Text>
+        <View style={styles.statusBadge}>
+          <Text style={styles.statusText}>{service.status}</Text>
+        </View>
       </View>
       <Text style={styles.description} numberOfLines={3}>
         {service.description}
@@ -24,16 +25,11 @@ export default function ServiceCard({ service, assignedProvider, onPress }) {
         <Text style={styles.metaText}>📅 {service.date}</Text>
         <Text style={styles.metaText}>📍 {service.location}</Text>
       </View>
-      {assignedProvider && (
-        <View style={styles.providerChip}>
-          <Text style={styles.providerChipText}>
-            👷 Prestador: {assignedProvider}
+      {suppliesCount > 0 && (
+        <View style={styles.suppliesInfo}>
+          <Text style={styles.suppliesText}>
+            📦 {suppliesCount} insumo{suppliesCount !== 1 ? 's' : ''} requerido{suppliesCount !== 1 ? 's' : ''}
           </Text>
-        </View>
-      )}
-      {ratingLabel && (
-        <View style={styles.ratingChip}>
-          <Text style={styles.ratingChipText}>⭐ {ratingLabel}</Text>
         </View>
       )}
       <View style={styles.footer}>
@@ -42,13 +38,9 @@ export default function ServiceCard({ service, assignedProvider, onPress }) {
             {quotesCount} cotización{quotesCount !== 1 ? 'es' : ''}
           </Text>
         </View>
-        <TouchableOpacity
-          style={styles.detailButton}
-          onPress={onPress}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.detailButtonText}>Ver detalle →</Text>
-        </TouchableOpacity>
+        <View style={styles.actionButton}>
+          <Text style={styles.actionButtonText}>Cotizar →</Text>
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -69,13 +61,30 @@ const styles = StyleSheet.create({
     borderColor: '#eee',
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     marginBottom: 8,
   },
   title: {
+    flex: 1,
     fontSize: 18,
     fontWeight: '700',
     color: '#333',
     lineHeight: 24,
+    marginRight: 12,
+  },
+  statusBadge: {
+    backgroundColor: '#e3f2fd',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  statusText: {
+    fontSize: 11,
+    color: '#1976d2',
+    fontWeight: '600',
+    textTransform: 'uppercase',
   },
   description: {
     fontSize: 14,
@@ -87,36 +96,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
-    marginBottom: 12,
+    marginBottom: 8,
   },
   metaText: {
     fontSize: 13,
     color: '#888',
   },
-  providerChip: {
-    backgroundColor: '#f0f7ff',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    marginBottom: 8,
-    alignSelf: 'flex-start',
-  },
-  providerChipText: {
-    fontSize: 13,
-    color: '#0066cc',
-    fontWeight: '500',
-  },
-  ratingChip: {
-    backgroundColor: '#fff9e6',
+  suppliesInfo: {
+    backgroundColor: '#f8f9fa',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
     marginBottom: 12,
     alignSelf: 'flex-start',
   },
-  ratingChipText: {
+  suppliesText: {
     fontSize: 13,
-    color: '#cc9900',
+    color: '#666',
     fontWeight: '500',
   },
   footer: {
@@ -139,12 +135,15 @@ const styles = StyleSheet.create({
     color: '#666',
     fontWeight: '500',
   },
-  detailButton: {
-    paddingVertical: 4,
+  actionButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
   },
-  detailButtonText: {
+  actionButtonText: {
     fontSize: 14,
-    color: '#007AFF',
+    color: '#fff',
     fontWeight: '600',
   },
 });

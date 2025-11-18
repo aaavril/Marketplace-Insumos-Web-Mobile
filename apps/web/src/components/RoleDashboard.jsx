@@ -49,7 +49,6 @@ const SolicitanteDashboard = () => {
 
   const filters = [
     { key: 'todos', label: 'Todos' },
-    { key: 'activos', label: 'Activos' },
     { key: 'solicitados', label: 'Solicitados' },
     { key: 'en-curso', label: 'En curso' },
     { key: 'finalizados', label: 'Finalizados' },
@@ -70,8 +69,6 @@ const SolicitanteDashboard = () => {
     const normalizedStatus = service.status.toLowerCase();
 
     switch (serviceFilter) {
-      case 'activos':
-        return !normalizedStatus.includes('finalizado') && !normalizedStatus.includes('completado');
       case 'solicitados':
         return normalizedStatus === 'publicado';
       case 'en-curso':
@@ -249,8 +246,6 @@ const ProveedorServicioDashboard = () => {
     const normalizedStatus = service.status.toLowerCase();
 
     switch (serviceFilter) {
-      case 'activos':
-        return true;
       case 'cotizados':
         return true;
       case 'asignados':

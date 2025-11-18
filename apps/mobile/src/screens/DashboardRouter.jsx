@@ -2,6 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useAppState } from '../../../../packages/core-logic/src/context/GlobalStateContext';
 import SolicitanteDashboard from './SolicitanteDashboard';
+import ProveedorServicioDashboard from './ProveedorServicioDashboard';
+import ProveedorInsumosDashboard from './ProveedorInsumosDashboard';
 
 /**
  * DashboardRouter - Router de dashboards según el rol del usuario
@@ -37,37 +39,6 @@ export default function DashboardRouter({ navigation }) {
   };
 
   return renderDashboardByRole();
-}
-
-
-/**
- * ProveedorServicioDashboard - Dashboard para Proveedores de Servicio
- */
-function ProveedorServicioDashboard({ navigation, onLogout }) {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Dashboard - Proveedor de Servicio</Text>
-      <Text style={styles.subtitle}>Bienvenido, Proveedor de Servicio</Text>
-      <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
-        <Text style={styles.logoutButtonText}>Cerrar Sesión</Text>
-      </TouchableOpacity>
-    </View>
-  );
-}
-
-/**
- * ProveedorInsumosDashboard - Dashboard para Proveedores de Insumos
- */
-function ProveedorInsumosDashboard({ navigation, onLogout }) {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Dashboard - Proveedor de Insumos</Text>
-      <Text style={styles.subtitle}>Bienvenido, Proveedor de Insumos</Text>
-      <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
-        <Text style={styles.logoutButtonText}>Cerrar Sesión</Text>
-      </TouchableOpacity>
-    </View>
-  );
 }
 
 const styles = StyleSheet.create({
