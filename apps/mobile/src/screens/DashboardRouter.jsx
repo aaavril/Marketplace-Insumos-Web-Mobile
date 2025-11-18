@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useAppState } from '../../../../packages/core-logic/src/context/GlobalStateContext';
+import SolicitanteDashboard from './SolicitanteDashboard';
 
 /**
  * DashboardRouter - Router de dashboards según el rol del usuario
@@ -38,20 +39,6 @@ export default function DashboardRouter({ navigation }) {
   return renderDashboardByRole();
 }
 
-/**
- * SolicitanteDashboard - Dashboard para usuarios con rol Solicitante
- */
-function SolicitanteDashboard({ navigation, onLogout }) {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Dashboard - Solicitante</Text>
-      <Text style={styles.subtitle}>Bienvenido, Solicitante</Text>
-      <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
-        <Text style={styles.logoutButtonText}>Cerrar Sesión</Text>
-      </TouchableOpacity>
-    </View>
-  );
-}
 
 /**
  * ProveedorServicioDashboard - Dashboard para Proveedores de Servicio
@@ -113,6 +100,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 15,
     alignItems: 'center',
+    marginTop: 20,
     minWidth: 150,
   },
   logoutButtonText: {

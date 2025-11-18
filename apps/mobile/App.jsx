@@ -9,6 +9,7 @@ import { StatusBar } from 'expo-status-bar';
 import { GlobalStateProvider, useAppState } from '../../../packages/core-logic/src/context/GlobalStateContext';
 import LoginScreen from './src/screens/LoginScreen';
 import DashboardRouter from './src/screens/DashboardRouter';
+import ServiceFormScreen from './src/screens/ServiceFormScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -75,6 +76,7 @@ function AppNavigator() {
         >
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Dashboard" component={DashboardRouter} />
+          <Stack.Screen name="ServiceForm" component={ServiceFormScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     );

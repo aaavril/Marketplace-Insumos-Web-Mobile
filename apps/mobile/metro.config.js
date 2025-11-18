@@ -20,10 +20,11 @@ config.resolver.nodeModulesPaths = [
   path.resolve(projectRoot, 'node_modules'),
 ];
 
-// Forzar resolución de React desde el workspace root para evitar múltiples instancias
+// Forzar resolución de módulos desde el workspace root para evitar múltiples instancias
 config.resolver.extraNodeModules = {
   'react': path.resolve(workspaceRoot, 'node_modules/react'),
   'react-dom': path.resolve(workspaceRoot, 'node_modules/react-dom'),
+  '@react-native-community/datetimepicker': path.resolve(projectRoot, 'node_modules/@react-native-community/datetimepicker'),
 };
 
 // Resolver personalizado para core-logic
@@ -34,6 +35,17 @@ config.resolver.resolveRequest = (context, realModuleName, platform) => {
   // Forzar React y React-DOM desde el workspace root
   if (realModuleName === 'react' || realModuleName === 'react-dom') {
     const resolvedPath = path.resolve(workspaceRoot, 'node_modules', realModuleName);
+    if (fs.existsSync(resolvedPath)) {
+      return {
+        filePath: path.join(resolvedPath, 'index.js'),
+        type: 'sourceFile',
+      };
+    }
+  }
+  
+  // Forzar @react-native-community/datetimepicker desde apps/mobile/node_modules
+  if (realModuleName === '@react-native-community/datetimepicker') {
+    const resolvedPath = path.resolve(projectRoot, 'node_modules', realModuleName);
     if (fs.existsSync(resolvedPath)) {
       return {
         filePath: path.join(resolvedPath, 'index.js'),
