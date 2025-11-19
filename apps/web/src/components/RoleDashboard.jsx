@@ -647,26 +647,46 @@ const ProveedorInsumosDashboard = () => {
 };
 
 /**
- * Componente principal que renderiza el dashboard según el rol del usuario
- * Implementa el control de acceso por rol (F1.HU3)
+ * RoleDashboard - Componente principal que renderiza el dashboard según el rol del usuario
+ * 
+ * Este componente implementa el control de acceso por rol (F1.HU3).
+ * Cada rol tiene un dashboard diferente con funcionalidades específicas:
+ * 
+ * - Solicitante: Publicar servicios, ver cotizaciones, comparar, seleccionar
+ * - Proveedor de Servicio: Ver servicios disponibles, enviar cotizaciones
+ * - Proveedor de Insumos: Publicar packs de insumos, ver ofertas
+ * 
+ * @returns {JSX.Element} Dashboard específico según el rol del usuario
+ * 
+ * Cómo funciona:
+ * 1. Obtiene el rol del usuario actual del estado global
+ * 2. Renderiza condicionalmente el dashboard correspondiente
+ * 3. Si el rol no es reconocido, muestra un mensaje de error
  */
 const RoleDashboard = () => {
+  // Obtiene el estado global para acceder al usuario actual
   const { state } = useAppState();
 
   // Renderizado condicional basado en el rol del usuario
+  // Cada rol tiene su propio componente de dashboard con funcionalidades específicas
+  
+  // Dashboard para Solicitantes
   if (state.currentUser.role === 'Solicitante') {
     return <SolicitanteDashboard />;
   }
 
+  // Dashboard para Proveedores de Servicio
   if (state.currentUser.role === 'Proveedor de Servicio') {
     return <ProveedorServicioDashboard />;
   }
 
+  // Dashboard para Proveedores de Insumos
   if (state.currentUser.role === 'Proveedor de Insumos') {
     return <ProveedorInsumosDashboard />;
   }
 
   // Fallback para roles no reconocidos
+  // Esto no debería pasar normalmente, pero es bueno manejarlo por si acaso
   return (
     <div className="role-dashboard">
       <div className="dashboard-header">

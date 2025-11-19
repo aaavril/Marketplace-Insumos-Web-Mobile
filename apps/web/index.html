@@ -1,13 +1,33 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <!-- Configuración de caracteres UTF-8 para soportar caracteres especiales -->
     <meta charset="UTF-8" />
+    
+    <!-- Favicon de la aplicación (icono que aparece en la pestaña del navegador) -->
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    
+    <!-- Viewport meta tag para responsive design en dispositivos móviles -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- Título de la aplicación que aparece en la pestaña del navegador -->
     <title>mi-app-react</title>
   </head>
   <body>
+    <!-- 
+      Este es el contenedor raíz donde React renderizará toda la aplicación.
+      React busca este elemento con id="root" y monta la aplicación ahí.
+      Este div está vacío inicialmente, React lo llenará con componentes.
+    -->
     <div id="root"></div>
+    
+    <!-- 
+      Punto de entrada de la aplicación JavaScript.
+      type="module" permite usar ES6 modules (import/export).
+      Vite procesa este archivo y carga todos los imports automáticamente.
+      Este es el único script que se carga directamente, todo lo demás
+      se carga a través de imports en main.jsx.
+    -->
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

@@ -10,15 +10,16 @@
 2. [Arquitectura del Proyecto](#arquitectura-del-proyecto)
 3. [Estructura de Carpetas](#estructura-de-carpetas)
 4. [Inicialización del Proyecto](#inicialización-del-proyecto)
-5. [Servidores y Entorno de Desarrollo](#servidores-y-entorno-de-desarrollo)
-6. [Tecnologías Utilizadas](#tecnologías-utilizadas)
-7. [Conceptos Fundamentales de JavaScript y React](#conceptos-fundamentales-de-javascript-y-react)
-8. [Ciclo de Vida de Componentes](#ciclo-de-vida-de-componentes)
-9. [Hooks: useState y useEffect](#hooks-usestate-y-useeffect)
-10. [React Context](#react-context)
-11. [Props: Comunicación entre Componentes](#props-comunicación-entre-componentes)
-12. [Proceso de Autenticación](#proceso-de-autenticación)
-13. [Flujo de Datos en la Aplicación](#flujo-de-datos-en-la-aplicación)
+5. [Bundling y Build: ¿Qué son "index.js" y "bundled render.js"?](#bundling-y-build-qué-son-indexjs-y-bundled-renderjs)
+6. [Servidores y Entorno de Desarrollo](#servidores-y-entorno-de-desarrollo)
+7. [Tecnologías Utilizadas](#tecnologías-utilizadas)
+8. [Conceptos Fundamentales de JavaScript y React](#conceptos-fundamentales-de-javascript-y-react)
+9. [Ciclo de Vida de Componentes](#ciclo-de-vida-de-componentes)
+10. [Hooks: useState y useEffect](#hooks-usestate-y-useeffect)
+11. [React Context](#react-context)
+12. [Props: Comunicación entre Componentes](#props-comunicación-entre-componentes)
+13. [Proceso de Autenticación](#proceso-de-autenticación)
+14. [Flujo de Datos en la Aplicación](#flujo-de-datos-en-la-aplicación)
 
 ---
 
@@ -222,6 +223,140 @@ export default App
   - `/services` → ServicesListPage
   - etc.
 
+**4. Configuración: `apps/web/vite.config.js`**
+
+- Configuración de Vite (build tool y dev server).
+- Define el alias `@core-logic` para importar desde `packages/core-logic`.
+- Configura la resolución de módulos del workspace.
+
+**5. HTML de entrada: `apps/web/index.html`**
+
+- Archivo HTML principal que carga la aplicación.
+- Contiene el `<div id="root">` donde React monta la app.
+- Carga `main.jsx` como módulo ES6.
+
+### Archivos Principales de Web - Lista Completa
+
+#### **Archivos de Entrada y Configuración**
+
+1. **`apps/web/index.html`** ⭐
+   - Archivo HTML principal
+   - Contiene el `<div id="root">` donde React monta la aplicación
+   - Carga `main.jsx` como módulo ES6
+
+2. **`apps/web/src/main.jsx`** ⭐
+   - Punto de entrada JavaScript de la aplicación web
+   - Monta React en el DOM usando `ReactDOM.createRoot()`
+   - Envuelve la app con `GlobalStateProvider` y `AuthProvider`
+
+3. **`apps/web/src/App.jsx`** ⭐
+   - Componente raíz de la aplicación
+   - Renderiza el `AppRouter` que maneja toda la navegación
+
+4. **`apps/web/vite.config.js`** ⚙️
+   - Configuración de Vite (build tool y dev server)
+   - Define alias `@core-logic` para importar código compartido
+   - Configura la resolución de módulos del workspace
+
+#### **Router y Rutas**
+
+5. **`apps/web/src/router/AppRouter.jsx`** ⭐
+   - Configura todas las rutas de la aplicación usando React Router
+   - Define rutas públicas y protegidas
+   - Maneja la navegación entre páginas
+
+6. **`apps/web/src/router/ProtectedRoute.jsx`**
+   - Componente que protege rutas privadas
+   - Redirige a Login si el usuario no está autenticado
+
+7. **`apps/web/src/router/PublicRoute.jsx`**
+   - Componente para rutas públicas
+   - Redirige a Dashboard si el usuario ya está autenticado
+
+#### **Páginas (Pages)**
+
+Ubicación: `apps/web/src/pages/`
+
+1. **`LandingPage.jsx`** ⭐
+   - Página de inicio (marketing)
+   - Muestra información sobre la plataforma
+   - Navega a Login o Dashboard según autenticación
+
+2. **`LoginPage.jsx`** ⭐
+   - Página de autenticación
+   - Formulario de login con email y contraseña
+   - Redirige automáticamente al dashboard después del login
+
+3. **`SignUpPage.jsx`**
+   - Página de registro (actualmente no funcional, solo UI)
+
+4. **`DashboardPage.jsx`** ⭐
+   - Dashboard principal según el rol del usuario
+   - Renderiza `RoleDashboard` que muestra el dashboard correcto
+
+5. **`CreateServicePage.jsx`**
+   - Página para crear un nuevo servicio (Rol: Solicitante)
+   - Formulario completo con validaciones
+
+6. **`ServicesListPage.jsx`**
+   - Lista de servicios publicados (Rol: Proveedor de Servicio)
+   - Filtros y búsqueda
+
+7. **`ServiceDetailPage.jsx`** ⭐
+   - Detalle completo de un servicio
+   - Comparador de cotizaciones (Rol: Solicitante)
+   - Enviar/editar cotizaciones (Rol: Proveedor de Servicio)
+
+8. **`CreateSupplyOfferPage.jsx`**
+   - Página para crear oferta de insumos (Rol: Proveedor de Insumos)
+
+9. **`NotFoundPage.jsx`**
+   - Página 404 para rutas no encontradas
+
+#### **Componentes Reutilizables**
+
+Ubicación: `apps/web/src/components/`
+
+- `RoleDashboard.jsx` ⭐ - Router que muestra dashboard según rol
+- `Login.jsx` - Componente de formulario de login
+- `SignUp.jsx` - Componente de formulario de registro
+- `ServiceList.jsx` - Lista de servicios con filtros
+- `ServiceForm.jsx` - Formulario para crear servicio
+- `ServiceCard.jsx` - Tarjeta de servicio
+- `QuoteComparator.jsx` - Comparador de cotizaciones
+- `SupplyOfferForm.jsx` - Formulario para ofertas de insumos
+- Y más componentes reutilizables...
+
+### Flujo de Ejecución Web
+
+```
+1. index.html
+   └── Carga main.jsx como módulo ES6
+        ↓
+2. main.jsx
+   └── ReactDOM.createRoot() → GlobalStateProvider → AuthProvider → App
+        ↓
+3. App.jsx
+   └── Renderiza AppRouter
+        ↓
+4. AppRouter.jsx
+   └── BrowserRouter → Routes → Route
+        ↓
+5. Rutas según URL:
+   - / → LandingPage
+   - /login → PublicRoute → LoginPage
+   - /dashboard → ProtectedRoute → DashboardPage
+        ↓
+6. DashboardPage.jsx
+   └── Renderiza RoleDashboard
+        ↓
+7. RoleDashboard.jsx
+   └── Renderiza dashboard según rol:
+       - SolicitanteDashboard
+       - ProveedorServicioDashboard
+       - ProveedorInsumosDashboard
+```
+
 #### **Aplicación Mobile** (`apps/mobile/`)
 
 **1. Punto de Entrada: `apps/mobile/index.js`**
@@ -259,6 +394,402 @@ export default function App() {
 **3. Navigator: `apps/mobile/src/screens/DashboardRouter.jsx`**
 
 - Define las pantallas usando React Navigation (Stack Navigator).
+
+**4. Polyfills: `apps/mobile/polyfills.js`**
+
+- Polyfill de `localStorage` para React Native.
+- React Native no tiene `localStorage` nativo, este archivo lo simula en memoria.
+- **IMPORTANTE**: Los datos se pierden al cerrar la app (es en memoria, no persistente).
+
+**5. Configuración: `apps/mobile/metro.config.js`**
+
+- Configuración de Metro Bundler (el bundler de React Native).
+- Resuelve módulos del workspace para importar desde `packages/core-logic`.
+- Configura `watchFolders` para hot reload del código compartido.
+
+**6. Configuración Expo: `apps/mobile/app.json`**
+
+- Configuración de Expo (nombre, versión, iconos, splash screen).
+- Configuración específica para iOS, Android y Web.
+
+### Archivos Principales de Mobile - Lista Completa
+
+#### **Archivos de Entrada y Configuración**
+
+1. **`apps/mobile/index.js`** ⭐
+   - Punto de entrada de la aplicación mobile
+   - Registra `App` como componente raíz con Expo
+   - Carga polyfills antes de iniciar
+
+2. **`apps/mobile/polyfills.js`**
+   - Polyfill de `localStorage` para React Native
+   - Simula la API de `localStorage` en memoria
+
+3. **`apps/mobile/App.jsx`** ⭐
+   - Componente raíz de la aplicación
+   - Contiene `ErrorBoundary`, `GlobalStateProvider`, y `AppNavigator`
+   - Configura la navegación principal
+
+4. **`apps/mobile/metro.config.js`** ⚙️
+   - Configuración de Metro Bundler
+   - Resuelve módulos del workspace (`packages/core-logic`)
+   - Configura hot reload
+
+5. **`apps/mobile/app.json`** ⚙️
+   - Configuración de Expo
+   - Define nombre, versión, iconos, splash screen
+
+#### **Pantallas (Screens)**
+
+Ubicación: `apps/mobile/src/screens/`
+
+1. **`LoginScreen.jsx`** ⭐
+   - Pantalla de autenticación
+   - Formulario de login con email y contraseña
+   - Navega automáticamente al dashboard después del login
+
+2. **`DashboardRouter.jsx`** ⭐
+   - Router que muestra el dashboard según el rol
+   - Renderiza condicionalmente:
+     - `SolicitanteDashboard` si rol es "Solicitante"
+     - `ProveedorServicioDashboard` si rol es "Proveedor de Servicio"
+     - `ProveedorInsumosDashboard` si rol es "Proveedor de Insumos"
+
+3. **`SolicitanteDashboard.jsx`**
+   - Dashboard para usuarios Solicitantes
+   - Ver servicios publicados, comparar cotizaciones, seleccionar
+
+4. **`ProveedorServicioDashboard.jsx`**
+   - Dashboard para Proveedores de Servicio
+   - Ver servicios disponibles, enviar cotizaciones
+
+5. **`ProveedorInsumosDashboard.jsx`**
+   - Dashboard para Proveedores de Insumos
+   - Ver y publicar packs de insumos
+
+6. **`ServiceFormScreen.jsx`**
+   - Pantalla para crear un nuevo servicio
+   - Formulario completo con validaciones
+
+7. **`ServiceListScreen.jsx`**
+   - Lista de servicios publicados disponibles
+   - Filtros y búsqueda
+
+8. **`ServiceDetailScreen.jsx`**
+   - Detalle completo de un servicio
+   - Ver cotizaciones, comparar, seleccionar (según rol)
+
+9. **`QuoteFormScreen.jsx`**
+   - Formulario para enviar una cotización
+   - Solo para Proveedores de Servicio
+
+10. **`SupplyOfferFormScreen.jsx`**
+    - Formulario para crear una oferta de insumos
+    - Solo para Proveedores de Insumos
+
+#### **Componentes Reutilizables**
+
+Ubicación: `apps/mobile/src/components/`
+
+- `ServiceCard.jsx` - Tarjeta de servicio
+- `PublicServiceCard.jsx` - Tarjeta de servicio público
+- `QuoteComparator.jsx` - Comparador de cotizaciones
+- `CompletionButton.jsx` - Botón para completar servicio
+- `DatePicker.jsx` - Selector de fecha nativo
+- `LocationPicker.jsx` - Selector de ubicación
+- `FilterPills.jsx` - Pills de filtros
+- `SummaryCard.jsx` - Tarjeta de resumen estadístico
+- `MenuButton.jsx` - Botón de menú hamburguesa
+- `MenuDrawer.jsx` - Drawer de menú lateral
+
+#### **Utilidades**
+
+- `apps/mobile/src/utils/helpers.js` - Funciones helper reutilizables
+
+### Flujo de Ejecución Mobile
+
+```
+1. index.js
+   └── registerRootComponent(App)
+        ↓
+2. polyfills.js
+   └── Carga polyfill de localStorage
+        ↓
+3. App.jsx
+   └── ErrorBoundary → GlobalStateProvider → AppNavigator
+        ↓
+4. AppNavigator (en App.jsx)
+   └── NavigationContainer → Stack.Navigator
+        ↓
+5. Pantalla inicial:
+   - Si NO autenticado → LoginScreen
+   - Si autenticado → DashboardRouter
+        ↓
+6. DashboardRouter.jsx
+   └── Renderiza dashboard según rol:
+       - SolicitanteDashboard
+       - ProveedorServicioDashboard
+       - ProveedorInsumosDashboard
+        ↓
+7. Navegación a pantallas específicas:
+   - ServiceFormScreen
+   - ServiceListScreen
+   - ServiceDetailScreen
+   - QuoteFormScreen
+   - SupplyOfferFormScreen
+```
+
+### Diferencias Clave: Web vs Mobile
+
+| Aspecto | Web | Mobile |
+|---------|-----|--------|
+| **Punto de entrada** | `index.html` → `main.jsx` | `index.js` → `App.jsx` |
+| **Navegación** | React Router DOM | React Navigation (Stack Navigator) |
+| **Componentes UI** | HTML (`<div>`, `<button>`) | React Native (`<View>`, `<TouchableOpacity>`) |
+| **Estilos** | CSS (archivos `.css`) | StyleSheet (JavaScript) |
+| **Pantallas** | `pages/` | `screens/` |
+| **Bundler** | Vite | Metro Bundler (Expo) |
+| **Persistencia** | localStorage (persistente) | Polyfill localStorage (en memoria, se pierde) |
+| **Error Handling** | Básico | ErrorBoundary (clase component) |
+| **Navegación programática** | `useNavigate()` | `navigation.navigate()` (prop) |
+
+### Archivos Clave de Mobile para Revisar
+
+1. **`apps/mobile/index.js`** - Cómo se inicia la app mobile
+2. **`apps/mobile/App.jsx`** - Componente raíz, navegación y ErrorBoundary
+3. **`apps/mobile/src/screens/DashboardRouter.jsx`** - Cómo funciona el routing por rol
+4. **`apps/mobile/src/screens/LoginScreen.jsx`** - Autenticación en mobile
+5. **`apps/mobile/metro.config.js`** - Cómo se resuelven módulos del workspace
+6. **`apps/mobile/polyfills.js`** - Por qué necesitamos polyfills y cómo funcionan
+
+---
+
+## 📦 Bundling y Build: ¿Qué son "index.js" y "bundled render.js"?
+
+### ¿Qué es el Bundling (Empaquetado)?
+
+Cuando desarrollas una aplicación React, escribes código en muchos archivos separados:
+- `main.jsx` - Punto de entrada
+- `App.jsx` - Componente principal
+- `components/Login.jsx` - Componentes
+- `context/AuthContext.jsx` - Contextos
+- etc.
+
+**El bundling es el proceso de combinar todos estos archivos en archivos optimizados para producción.**
+
+### Desarrollo vs Producción
+
+#### **En Desarrollo** (con Vite):
+- **Punto de entrada**: `apps/web/src/main.jsx`
+- Vite sirve los archivos **directamente** sin bundling completo
+- Los archivos se cargan **on-demand** (carga bajo demanda)
+- **Hot Module Replacement (HMR)**: Cambios instantáneos sin recargar
+
+**En el HTML** (`apps/web/index.html`):
+```html
+<script type="module" src="/src/main.jsx"></script>
+```
+
+Vite procesa este archivo y carga todos los imports automáticamente.
+
+#### **En Producción** (después de `npm run build`):
+- Vite **empqueta** (bundlea) todo el código
+- Combina todos los archivos en archivos optimizados
+- Minifica el código (lo hace más pequeño)
+- Divide el código en "chunks" (fragmentos) para mejor rendimiento
+
+**Archivos generados** (en `apps/web/dist/` después del build):
+```
+dist/
+├── index.html
+├── assets/
+│   ├── index-[hash].js      ← Tu código principal (bundled)
+│   ├── vendor-[hash].js     ← Dependencias (React, React-DOM, etc.)
+│   └── [nombre]-[hash].js   ← Otros chunks (si hay code splitting)
+```
+
+### ¿Qué es "index.js" (o "main.jsx" en este proyecto)?
+
+**`main.jsx`** es el **punto de entrada** de la aplicación:
+
+```jsx
+// apps/web/src/main.jsx
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App.jsx'
+import { GlobalStateProvider } from '@core-logic/context/GlobalStateContext.jsx'
+import { AuthProvider } from '@core-logic/context/AuthContext.jsx'
+import './index.css'
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <GlobalStateProvider>
+      <AuthProvider>
+        <App />
+      </AuthProvider>
+    </GlobalStateProvider>
+  </React.StrictMode>,
+)
+```
+
+**¿Qué hace?**
+1. **Importa React y ReactDOM**: Necesarios para renderizar componentes
+2. **Importa tu App**: El componente raíz de tu aplicación
+3. **Importa Providers**: Contextos globales (GlobalStateProvider, AuthProvider)
+4. **Monta la app**: `ReactDOM.createRoot()` crea el "root" de React
+5. **Renderiza**: `.render()` renderiza `<App />` dentro del `<div id="root">` del HTML
+
+### ¿Qué es "bundled render.js" (o archivos bundle)?
+
+**"bundled render.js"** (o los archivos `index-[hash].js`, `vendor-[hash].js`) son los archivos **resultantes del proceso de bundling**.
+
+**Antes del build** (código fuente):
+```
+src/
+├── main.jsx              ← Punto de entrada
+├── App.jsx
+├── components/
+│   └── Login.jsx
+└── context/
+    └── AuthContext.jsx
+```
+
+**Después del build** (código bundleado):
+```
+dist/
+└── assets/
+    ├── index-abc123.js   ← Contiene: main.jsx + App.jsx + Login.jsx + AuthContext.jsx (todo combinado)
+    └── vendor-xyz789.js  ← Contiene: React + React-DOM + React Router (dependencias)
+```
+
+### ¿Por qué se hace el Bundling?
+
+#### 1. **Rendimiento**
+- **Menos requests HTTP**: En lugar de 50 archivos, solo 2-3 archivos
+- **Carga más rápida**: El navegador descarga menos archivos
+- **Código optimizado**: Minificado (sin espacios, nombres cortos)
+
+#### 2. **Compatibilidad**
+- **Transpilación**: Convierte JSX y ES6+ a JavaScript que todos los navegadores entienden
+- **Polyfills**: Agrega compatibilidad para navegadores antiguos
+
+#### 3. **Organización**
+- **Code Splitting**: Divide el código en chunks que se cargan cuando se necesitan
+- **Tree Shaking**: Elimina código no usado
+
+### Proceso de Build Paso a Paso
+
+#### **1. Desarrollo** (`npm run dev:web`):
+
+```
+Usuario escribe código → Vite detecta cambios → Actualiza solo lo necesario → Navegador refresca
+```
+
+**Archivos servidos**:
+- Vite sirve `/src/main.jsx` directamente
+- Carga imports bajo demanda
+- Sin bundling completo
+
+#### **2. Build para Producción** (`npm run build:web`):
+
+```
+1. Vite lee main.jsx (punto de entrada)
+2. Analiza todos los imports recursivamente
+3. Combina todos los archivos en bundles optimizados
+4. Minifica el código
+5. Divide en chunks (vendor, código de la app, etc.)
+6. Genera archivos en dist/
+```
+
+**Resultado**:
+```html
+<!-- dist/index.html (generado automáticamente) -->
+<!doctype html>
+<html>
+  <head>...</head>
+  <body>
+    <div id="root"></div>
+    <!-- Estos son los archivos bundleados -->
+    <script type="module" src="/assets/index-abc123.js"></script>
+    <script type="module" src="/assets/vendor-xyz789.js"></script>
+  </body>
+</html>
+```
+
+### Estructura de Archivos Bundleados
+
+**`index-[hash].js`** contiene:
+- Tu código de la aplicación (`App.jsx`, componentes, contextos, etc.)
+- Código que escribiste
+
+**`vendor-[hash].js`** contiene:
+- Dependencias de `node_modules` (React, React-DOM, React Router, etc.)
+- Librerías externas
+
+**¿Por qué se separan?**
+- **Cache**: Si cambias tu código, el `vendor.js` no cambia → El navegador puede usar la versión cacheada
+- **Mejor rendimiento**: Solo descarga lo que cambió
+
+### Hash en los Nombres
+
+Los archivos se nombran con un hash: `index-abc123.js`
+
+**¿Por qué?**
+- **Cache busting**: Cuando actualizas la app, el hash cambia
+- El navegador descarga la nueva versión en lugar de usar la cacheada
+- Garantiza que los usuarios siempre tengan la versión más reciente
+
+### Ejemplo Visual del Flujo
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                   DESARROLLO                            │
+│  (npm run dev:web)                                      │
+│                                                          │
+│  Código fuente → Vite Dev Server → Navegador           │
+│                                                          │
+│  src/main.jsx ──┐                                        │
+│  src/App.jsx ───┼─→ Vite ─→ http://localhost:5173      │
+│  src/components─┘    (sin bundle completo)              │
+└─────────────────────────────────────────────────────────┘
+                        ↓
+                  npm run build
+                        ↓
+┌─────────────────────────────────────────────────────────┐
+│                   PRODUCCIÓN                            │
+│  (npm run build:web)                                    │
+│                                                          │
+│  Código fuente → Vite Build → Bundles Optimizados      │
+│                                                          │
+│  src/main.jsx ──┐                                        │
+│  src/App.jsx ───┼─→ Vite ─→ dist/assets/               │
+│  src/components─┘    Bundler    ├── index-abc123.js    │
+│                                 └── vendor-xyz789.js    │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Resumen
+
+| Concepto | Desarrollo | Producción |
+|----------|------------|------------|
+| **Punto de entrada** | `main.jsx` | `main.jsx` (se convierte en bundle) |
+| **Archivos** | Múltiples archivos separados | Archivos bundleados combinados |
+| **Tamaño** | Tamaño real | Minificado (más pequeño) |
+| **Carga** | Bajo demanda (lazy loading) | Todos los bundles cargados |
+| **Optimización** | Ninguna | Minificación, tree shaking, code splitting |
+| **Nombres** | Nombres reales (`main.jsx`) | Nombres con hash (`index-abc123.js`) |
+
+### En Este Proyecto
+
+**Web** (`apps/web/`):
+- **Punto de entrada**: `src/main.jsx`
+- **Bundler**: Vite
+- **Archivos bundleados**: `dist/assets/index-[hash].js`, `dist/assets/vendor-[hash].js`
+
+**Mobile** (`apps/mobile/`):
+- **Punto de entrada**: `index.js`
+- **Bundler**: Metro Bundler (Expo)
+- **Archivos bundleados**: Se genera un bundle optimizado para iOS/Android
 
 ---
 
@@ -1487,40 +2018,1798 @@ const SolicitanteDashboard = () => {
 
 ### Archivos Clave para Revisar
 
+#### **Web**
 1. **`apps/web/src/main.jsx`** - Punto de entrada web
-2. **`apps/mobile/index.js`** - Punto de entrada mobile
-3. **`packages/core-logic/src/context/GlobalStateContext.jsx`** - Estado global
-4. **`packages/core-logic/src/context/AuthContext.jsx`** - Autenticación
-5. **`packages/core-logic/src/context/AppReducer.js`** - Lógica de actualización de estado
-6. **`packages/core-logic/src/services/AuthService.js`** - Servicio de login
-7. **`apps/web/src/router/AppRouter.jsx`** - Configuración de rutas web
-8. **`apps/web/src/pages/DashboardPage.jsx`** - Dashboard principal
+2. **`apps/web/src/App.jsx`** - Componente raíz web
+3. **`apps/web/src/router/AppRouter.jsx`** - Configuración de rutas web
+4. **`apps/web/src/pages/DashboardPage.jsx`** - Dashboard principal
+
+#### **Mobile**
+1. **`apps/mobile/index.js`** - Punto de entrada mobile
+2. **`apps/mobile/App.jsx`** - Componente raíz mobile (navegación y ErrorBoundary)
+3. **`apps/mobile/src/screens/DashboardRouter.jsx`** - Router de dashboards por rol
+4. **`apps/mobile/src/screens/LoginScreen.jsx`** - Autenticación mobile
+5. **`apps/mobile/metro.config.js`** - Configuración del bundler
+6. **`apps/mobile/polyfills.js`** - Polyfill de localStorage
+
+#### **Compartido (Core Logic)**
+1. **`packages/core-logic/src/context/GlobalStateContext.jsx`** - Estado global
+2. **`packages/core-logic/src/context/AuthContext.jsx`** - Autenticación
+3. **`packages/core-logic/src/context/AppReducer.js`** - Lógica de actualización de estado
+4. **`packages/core-logic/src/services/AuthService.js`** - Servicio de login
+5. **`packages/core-logic/src/data/initialState.js`** - Estado inicial y usuarios mock
 
 ---
 
 ## 🎓 Conceptos para la Defensa
 
-### Preguntas Frecuentes
+Esta sección cubre todos los conceptos fundamentales que debes entender para defender tu proyecto.
+
+---
+
+## 📚 Conceptos Básicos de JavaScript y React
+
+### JavaScript ES6+ (Conceptos Clave)
+
+#### 1. **Arrow Functions (Funciones Flecha)**
+```javascript
+// Función tradicional
+function sumar(a, b) {
+  return a + b;
+}
+
+// Arrow function
+const sumar = (a, b) => a + b;
+
+// En React, se usan mucho para callbacks
+<button onClick={() => setCount(count + 1)}>Click</button>
+```
+
+#### 2. **Destructuring (Desestructuración)**
+```javascript
+// Desestructurar objetos
+const { name, email } = user;
+// Equivale a: const name = user.name; const email = user.email;
+
+// Desestructurar arrays
+const [first, second] = [1, 2];
+
+// En React, se usa mucho con props
+const MiComponente = ({ title, description }) => {
+  return <div>{title}</div>;
+};
+```
+
+#### 3. **Spread Operator (Operador de Propagación)**
+```javascript
+// Copiar arrays
+const nuevoArray = [...arrayOriginal];
+
+// Copiar objetos
+const nuevoObjeto = { ...objetoOriginal, nuevaProp: 'valor' };
+
+// En React, se usa para actualizar estado inmutably
+setState({ ...state, nuevaProp: 'valor' });
+```
+
+#### 4. **Template Literals (Literales de Plantilla)**
+```javascript
+const nombre = 'Juan';
+const mensaje = `Hola, ${nombre}!`; // "Hola, Juan!"
+```
+
+#### 5. **Modules (Módulos ES6)**
+```javascript
+// Exportar
+export const miFuncion = () => {};
+export default MiComponente;
+
+// Importar
+import MiComponente from './MiComponente';
+import { miFuncion } from './utils';
+```
+
+### React (Conceptos Fundamentales)
+
+#### 1. **Componente = Función que Retorna JSX**
+```jsx
+// Un componente es simplemente una función
+function MiComponente() {
+  return <div>Hola Mundo</div>;
+}
+
+// O con arrow function
+const MiComponente = () => {
+  return <div>Hola Mundo</div>;
+};
+
+// Los parámetros de la función son las PROPS
+const MiComponente = (props) => {
+  return <div>{props.titulo}</div>;
+};
+
+// O con destructuring
+const MiComponente = ({ titulo, descripcion }) => {
+  return (
+    <div>
+      <h1>{titulo}</h1>
+      <p>{descripcion}</p>
+    </div>
+  );
+};
+```
+
+#### 2. **JSX (JavaScript XML)**
+```jsx
+// JSX es una sintaxis que parece HTML pero es JavaScript
+const elemento = <h1>Hola, Mundo!</h1>;
+
+// Se transpila a:
+const elemento = React.createElement('h1', null, 'Hola, Mundo!');
+
+// Puedes usar expresiones JavaScript dentro de JSX
+const nombre = 'Juan';
+const elemento = <h1>Hola, {nombre}!</h1>;
+```
+
+---
+
+## 🔄 Ciclo de Vida de un Componente (Detallado)
+
+### ¿Qué es el Ciclo de Vida?
+
+El ciclo de vida de un componente React son las **tres fases principales** por las que pasa desde que se crea hasta que se destruye:
+
+1. **Mounting (Montaje)** - El componente se crea y se inserta en el DOM
+2. **Updating (Actualización)** - El componente se actualiza cuando cambian props o estado
+3. **Unmounting (Desmontaje)** - El componente se elimina del DOM
+
+### Fase 1: Mounting (Montaje)
+
+**¿Qué pasa cuando un componente se monta?**
+
+```jsx
+const MiComponente = () => {
+  // 1. Se ejecuta el código del componente (se crea la función)
+  const [count, setCount] = useState(0); // 2. Se inicializa el estado
+  
+  // 3. useEffect con [] se ejecuta DESPUÉS del primer render
+  useEffect(() => {
+    console.log('Componente montado');
+    // Ideal para: llamadas a API, suscripciones, leer localStorage
+  }, []); // Array vacío = solo al montar
+  
+  // 4. Se renderiza el JSX
+  return <div>{count}</div>;
+};
+```
+
+**Flujo de Montaje:**
+```
+1. React crea el componente (ejecuta la función)
+   ↓
+2. Se inicializan los hooks (useState, useEffect, etc.)
+   ↓
+3. Se renderiza el JSX (primera vez)
+   ↓
+4. React inserta el componente en el DOM (Virtual DOM → Real DOM)
+   ↓
+5. useEffect con [] se ejecuta (si existe)
+```
+
+### Fase 2: Updating (Actualización)
+
+**¿Qué pasa cuando cambia el estado o las props?**
+
+```jsx
+const MiComponente = ({ nombre }) => {
+  const [count, setCount] = useState(0);
+  
+  // Se ejecuta cuando count o nombre cambian
+  useEffect(() => {
+    console.log('Componente actualizado:', count, nombre);
+  }, [count, nombre]); // Array con dependencias
+  
+  return (
+    <div>
+      <p>{nombre}</p>
+      <p>Count: {count}</p>
+      <button onClick={() => setCount(count + 1)}>Incrementar</button>
+    </div>
+  );
+};
+```
+
+**Flujo de Actualización:**
+```
+1. Cambia el estado (setCount) o las props (nombre)
+   ↓
+2. React detecta el cambio
+   ↓
+3. React re-renderiza el componente (ejecuta la función de nuevo)
+   ↓
+4. React compara el nuevo JSX con el anterior (Virtual DOM diffing)
+   ↓
+5. React actualiza solo lo que cambió en el DOM real
+   ↓
+6. useEffect se ejecuta si las dependencias cambiaron
+```
+
+**¿Qué pasa si cambio el estado del componente?**
+
+```jsx
+const MiComponente = () => {
+  const [count, setCount] = useState(0);
+  
+  const handleClick = () => {
+    setCount(count + 1); // ← Cambia el estado
+    // React NO actualiza inmediatamente
+    // React programa una actualización
+  };
+  
+  // Después de setCount, React:
+  // 1. Marca el componente para re-renderizar
+  // 2. Ejecuta la función del componente de nuevo
+  // 3. Compara el nuevo JSX con el anterior
+  // 4. Actualiza solo lo que cambió en el DOM
+  
+  return <div>{count}</div>;
+};
+```
+
+### Fase 3: Unmounting (Desmontaje)
+
+**¿Qué pasa cuando un componente se desmonta?**
+
+```jsx
+const MiComponente = () => {
+  useEffect(() => {
+    // Código que se ejecuta al montar
+    const timer = setInterval(() => {
+      console.log('Tick');
+    }, 1000);
+    
+    // Cleanup function: se ejecuta al desmontar
+    return () => {
+      clearInterval(timer); // Limpia el timer
+      console.log('Componente desmontado');
+    };
+  }, []);
+  
+  return <div>Mi Componente</div>;
+};
+```
+
+**Flujo de Desmontaje:**
+```
+1. El componente se va a eliminar (navegación, condición, etc.)
+   ↓
+2. React ejecuta la función de cleanup de useEffect (si existe)
+   ↓
+3. React elimina el componente del DOM
+   ↓
+4. El componente ya no existe en memoria
+```
+
+### Comparación: Clase Components vs Functional Components
+
+| Fase | Clase Component | Functional Component (Hooks) |
+|------|----------------|------------------------------|
+| **Montaje** | `componentDidMount()` | `useEffect(() => {}, [])` |
+| **Actualización** | `componentDidUpdate()` | `useEffect(() => {}, [deps])` |
+| **Desmontaje** | `componentWillUnmount()` | `return () => {}` en useEffect |
+
+---
+
+## 🎣 Hooks: useState y useEffect (Detallado)
+
+### useState - Estado Local
+
+**¿Qué es?**
+- Hook que permite agregar estado a un componente funcional
+- Retorna un array con dos elementos: `[valor, setter]`
+
+**Sintaxis:**
+```jsx
+const [estado, setEstado] = useState(valorInicial);
+```
+
+**Ejemplo Completo:**
+```jsx
+import { useState } from 'react';
+
+const Contador = () => {
+  // Inicializa count con 0
+  const [count, setCount] = useState(0);
+  
+  // Función para incrementar
+  const incrementar = () => {
+    setCount(count + 1); // Actualiza el estado
+    // React re-renderiza el componente automáticamente
+  };
+  
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <button onClick={incrementar}>Incrementar</button>
+    </div>
+  );
+};
+```
+
+**¿Cómo funciona internamente?**
+1. `useState(0)` inicializa el estado con `0`
+2. Retorna `[0, setCount]` donde `0` es el valor y `setCount` es la función setter
+3. Cuando llamas `setCount(5)`, React:
+   - Actualiza el estado interno
+   - Marca el componente para re-renderizar
+   - Ejecuta la función del componente de nuevo
+   - Compara el nuevo JSX con el anterior
+   - Actualiza solo lo que cambió en el DOM
+
+**Múltiples Estados:**
+```jsx
+const Formulario = () => {
+  const [nombre, setNombre] = useState('');
+  const [email, setEmail] = useState('');
+  const [edad, setEdad] = useState(0);
+  
+  // Cada useState es independiente
+  return (
+    <form>
+      <input value={nombre} onChange={(e) => setNombre(e.target.value)} />
+      <input value={email} onChange={(e) => setEmail(e.target.value)} />
+      <input value={edad} onChange={(e) => setEdad(e.target.value)} />
+    </form>
+  );
+};
+```
+
+### useEffect - Efectos Secundarios
+
+**¿Qué es?**
+- Hook que permite ejecutar código **después del render**
+- Reemplaza `componentDidMount`, `componentDidUpdate`, y `componentWillUnmount`
+- **IMPORTANTE**: useEffect NO se ejecuta durante el render, se ejecuta DESPUÉS
+
+**Sintaxis:**
+```jsx
+useEffect(
+  () => {
+    // Función que se ejecuta después del render
+    // Puede retornar una función de cleanup (opcional)
+    return () => {
+      // Función de cleanup (opcional)
+    };
+  },
+  [dependencias] // Array de dependencias
+);
+```
+
+**useEffect recibe DOS parámetros:**
+1. **Primer parámetro**: Una función que se ejecuta después del render
+2. **Segundo parámetro**: Un array de dependencias que controla cuándo se ejecuta
+
+**¿Cuándo se ejecuta useEffect?**
+
+```
+1. React renderiza el componente (ejecuta la función)
+   ↓
+2. React actualiza el DOM
+   ↓
+3. useEffect se ejecuta (DESPUÉS del render)
+   ↓
+4. Si hay cleanup, se ejecuta antes del próximo efecto o al desmontar
+```
+
+**Reglas del Array de Dependencias:**
+
+#### 1. **Array Vacío `[]` - Se ejecuta SOLO en el Montaje**
+
+```jsx
+useEffect(() => {
+  console.log('Solo se ejecuta UNA VEZ cuando el componente se monta');
+  // Equivale a componentDidMount
+}, []); // ← Array vacío = solo al montar
+```
+
+**¿Qué significa?**
+- La función se ejecuta **una sola vez** cuando el componente se monta
+- No se ejecuta en actualizaciones posteriores
+- Ideal para: llamadas a API iniciales, leer localStorage, suscripciones
+
+#### 2. **Array con Dependencias `[variable, estado, función]` - Se ejecuta cuando Cambian**
+
+```jsx
+const [count, setCount] = useState(0);
+const [nombre, setNombre] = useState('');
+
+useEffect(() => {
+  console.log('Se ejecuta cuando count o nombre cambian');
+  // Se ejecuta:
+  // - Al montar (primera vez)
+  // - Cada vez que count cambia
+  // - Cada vez que nombre cambia
+}, [count, nombre]); // ← Array con dependencias
+```
+
+**¿Qué significa?**
+- La función se ejecuta:
+  1. **Al montar** (primera vez)
+  2. **Cada vez que una de las dependencias cambia** (count o nombre)
+- Si `count` cambia → se ejecuta
+- Si `nombre` cambia → se ejecuta
+- Si ambos cambian → se ejecuta una sola vez (React agrupa las actualizaciones)
+
+**Tipos de dependencias:**
+- **Variables de estado**: `[count, nombre]`
+- **Props**: `[props.userId]`
+- **Valores calculados**: `[total, precio]`
+- **Funciones**: `[handleSubmit]` (si la función cambia)
+
+#### 3. **Sin Array (sin segundo parámetro) - Se ejecuta en CADA Render**
+
+```jsx
+useEffect(() => {
+  console.log('Se ejecuta en CADA render');
+  // ⚠️ CUIDADO: Puede causar loops infinitos si actualizas estado aquí
+}); // ← Sin array = cada render
+```
+
+**¿Qué significa?**
+- La función se ejecuta **después de cada render**
+- ⚠️ **PELIGRO**: Si actualizas estado dentro, puede causar un loop infinito
+- Raramente se usa
+
+#### 4. **Array Vacío `[]` + Función Retornada = Cleanup en Unmount**
+
+```jsx
+useEffect(() => {
+  // Función que se ejecuta al montar
+  console.log('Componente montado');
+  
+  const timer = setInterval(() => {
+    console.log('Tick');
+  }, 1000);
+  
+  // Función retornada = Cleanup
+  // Se ejecuta cuando el componente se DESMONTA
+  return () => {
+    console.log('Componente desmontado - limpiando');
+    clearInterval(timer); // Limpia el timer
+  };
+}, []); // ← Array vacío = solo al montar, cleanup al desmontar
+```
+
+**¿Qué significa?**
+- **Array vacío `[]`**: La función principal se ejecuta solo al montar
+- **Función retornada**: Se ejecuta cuando el componente se desmonta
+- Equivale a `componentWillUnmount`
+- Ideal para: limpiar timers, cancelar suscripciones, cerrar conexiones
+
+#### 5. **Array con Dependencias + Función Retornada = Cleanup antes del Próximo Efecto**
+
+```jsx
+const [count, setCount] = useState(0);
+
+useEffect(() => {
+  console.log('Efecto ejecutado, count:', count);
+  
+  const timer = setTimeout(() => {
+    console.log('Timer completado para count:', count);
+  }, 1000);
+  
+  // Función retornada = Cleanup
+  // Se ejecuta ANTES del próximo efecto o al desmontar
+  return () => {
+    console.log('Cleanup ejecutado, limpiando timer para count:', count);
+    clearTimeout(timer);
+  };
+}, [count]); // ← Se ejecuta cuando count cambia
+```
+
+**¿Qué significa?**
+- Cuando `count` cambia:
+  1. **Primero** se ejecuta el cleanup del efecto anterior (si existe)
+  2. **Luego** se ejecuta el nuevo efecto
+- Al desmontar: se ejecuta el cleanup
+- Ideal para: limpiar efectos anteriores antes de ejecutar nuevos
+
+**Flujo Completo:**
+```
+count = 0 → useEffect ejecuta → timer inicia
+count = 1 → cleanup (count=0) → useEffect ejecuta (count=1) → timer inicia
+count = 2 → cleanup (count=1) → useEffect ejecuta (count=2) → timer inicia
+desmontar → cleanup (count=2)
+```
+
+**Flujo de Ejecución:**
+```jsx
+const MiComponente = () => {
+  const [count, setCount] = useState(0);
+  
+  console.log('1. Esto se ejecuta DURANTE el render');
+  
+  useEffect(() => {
+    console.log('2. Esto se ejecuta DESPUÉS del render');
+    // useEffect "viene y hace lo que tiene que hacer" después de que React
+    // terminó de renderizar y actualizar el DOM
+  }, [count]);
+  
+  console.log('3. Esto también se ejecuta DURANTE el render');
+  
+  return <div>{count}</div>;
+};
+
+// Salida en consola:
+// 1. Esto se ejecuta DURANTE el render
+// 3. Esto también se ejecuta DURANTE el render
+// 2. Esto se ejecuta DESPUÉS del render
+```
+
+**Resumen de los 5 Casos de Uso:**
+
+| Array de Dependencias | Función Retornada | Cuándo se Ejecuta |
+|----------------------|-------------------|-------------------|
+| `[]` (vacío) | ❌ No | Solo al montar (una vez) |
+| `[]` (vacío) | ✅ Sí | Al montar + Cleanup al desmontar |
+| `[deps]` (con dependencias) | ❌ No | Al montar + cuando dependencias cambian |
+| `[deps]` (con dependencias) | ✅ Sí | Al montar + cuando dependencias cambian + Cleanup antes del próximo efecto |
+| Sin array | ❌ No | En cada render (⚠️ peligroso) |
+
+**Ejemplos Detallados:**
+
+#### Caso 1: Array Vacío `[]` - Solo Montaje
+```jsx
+useEffect(() => {
+  console.log('Solo se ejecuta UNA VEZ al montar');
+  // Ideal para: llamadas a API iniciales, leer localStorage, suscripciones
+}, []); // ← Array vacío = solo al montar
+```
+
+#### Caso 2: Array con Dependencias `[count, nombre]` - Cuando Cambian
+```jsx
+const [count, setCount] = useState(0);
+const [nombre, setNombre] = useState('');
+
+useEffect(() => {
+  console.log('Se ejecuta cuando count o nombre cambian:', count, nombre);
+  // Se ejecuta:
+  // 1. Al montar (primera vez)
+  // 2. Cada vez que count cambia
+  // 3. Cada vez que nombre cambia
+}, [count, nombre]); // ← Array con dependencias
+```
+
+#### Caso 3: Array Vacío `[]` + Función Retornada - Montaje y Unmount
+```jsx
+useEffect(() => {
+  console.log('Componente montado');
+  const timer = setInterval(() => {
+    console.log('Tick');
+  }, 1000);
+  
+  // Función retornada = Cleanup
+  // Se ejecuta SOLO cuando el componente se DESMONTA
+  return () => {
+    console.log('Componente desmontado - limpiando');
+    clearInterval(timer);
+  };
+}, []); // ← Array vacío = solo al montar, cleanup solo al desmontar
+```
+
+#### Caso 4: Array con Dependencias `[count]` + Función Retornada - Con Cleanup
+```jsx
+const [count, setCount] = useState(0);
+
+useEffect(() => {
+  console.log('Efecto ejecutado para count:', count);
+  const timer = setTimeout(() => {
+    console.log('Timer para count:', count);
+  }, 1000);
+  
+  // Función retornada = Cleanup
+  // Se ejecuta ANTES del próximo efecto (cuando count cambia) o al desmontar
+  return () => {
+    console.log('Cleanup para count:', count);
+    clearTimeout(timer);
+  };
+}, [count]); // ← Se ejecuta cuando count cambia
+
+// Flujo:
+// count = 0 → efecto ejecuta (count=0)
+// count = 1 → cleanup (count=0) → efecto ejecuta (count=1)
+// count = 2 → cleanup (count=1) → efecto ejecuta (count=2)
+// desmontar → cleanup (count=2)
+```
+
+#### Caso 5: Sin Array - Cada Render (⚠️ Peligroso)
+```jsx
+useEffect(() => {
+  console.log('Se ejecuta en CADA render');
+  // ⚠️ CUIDADO: Si actualizas estado aquí, causa loop infinito
+}); // ← Sin array = cada render
+```
+
+**Ejemplo Real del Proyecto:**
+```jsx
+// packages/core-logic/src/context/AuthContext.jsx
+export const AuthProvider = ({ children }) => {
+  const { state, dispatch } = useAppState();
+  
+  // Se ejecuta solo al montar (una vez)
+  // useEffect "viene" después de que AuthProvider se renderiza
+  // y hace lo que tiene que hacer: cargar el usuario de localStorage
+  useEffect(() => {
+    // Carga el usuario guardado en localStorage
+    const savedUser = localStorage.getItem('currentUser');
+    if (savedUser) {
+      const user = JSON.parse(savedUser);
+      dispatch({ type: 'SET_CURRENT_USER', payload: user });
+    }
+  }, [dispatch]); // dispatch no cambia, así que solo se ejecuta una vez
+  
+  return <>{children}</>;
+};
+```
+
+### useMemo - Memoización de Valores
+
+**¿Qué es?**
+- Hook que **memoiza** (guarda en memoria) el resultado de un cálculo costoso
+- Solo recalcula cuando las dependencias cambian
+- **Optimización de rendimiento**: Evita cálculos innecesarios en cada render
+
+**Sintaxis:**
+```jsx
+const valorMemoizado = useMemo(() => {
+  // Cálculo costoso
+  return resultado;
+}, [dependencias]); // Solo recalcula si dependencias cambian
+```
+
+**Ejemplo Básico:**
+```jsx
+import { useState, useMemo } from 'react';
+
+const ListaNumeros = ({ numeros }) => {
+  const [filter, setFilter] = useState('');
+  
+  // SIN useMemo: Se recalcula en CADA render (ineficiente)
+  const numerosFiltrados = numeros.filter(n => n > 100);
+  
+  // CON useMemo: Solo se recalcula si 'numeros' cambia
+  const numerosFiltradosMemo = useMemo(() => {
+    console.log('Recalculando...'); // Solo se ejecuta cuando numeros cambia
+    return numeros.filter(n => n > 100);
+  }, [numeros]);
+  
+  return (
+    <div>
+      {numerosFiltradosMemo.map(n => <div key={n}>{n}</div>)}
+    </div>
+  );
+};
+```
+
+**Ejemplo Real del Proyecto:**
+```jsx
+// apps/web/src/components/ServiceList.jsx
+const ServiceList = () => {
+  const { state } = useAppState();
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [locationFilter, setLocationFilter] = useState('');
+  
+  // useMemo: Solo recalcula servicios filtrados si state.services o filtros cambian
+  const serviciosFiltrados = useMemo(() => {
+    return state.services.filter(service => {
+      const matchCategory = !categoryFilter || service.category === categoryFilter;
+      const matchLocation = !locationFilter || service.location === locationFilter;
+      return matchCategory && matchLocation;
+    });
+  }, [state.services, categoryFilter, locationFilter]);
+  
+  // Si cambia otro estado (como searchQuery), NO recalcula serviciosFiltrados
+  // Esto mejora el rendimiento
+  
+  return (
+    <div>
+      {serviciosFiltrados.map(service => (
+        <ServiceCard key={service.id} service={service} />
+      ))}
+    </div>
+  );
+};
+```
+
+**¿Cuándo usar useMemo?**
+- ✅ Cálculos costosos (filtros complejos, transformaciones de arrays grandes)
+- ✅ Cuando el cálculo depende de props/estado que no cambian frecuentemente
+- ❌ NO usar para cálculos simples (más overhead que beneficio)
+- ❌ NO usar para valores primitivos simples
+
+**Comparación:**
+```jsx
+// SIN useMemo - Se recalcula en cada render
+const Componente = ({ items }) => {
+  const itemsFiltrados = items.filter(item => item.active); // Se ejecuta siempre
+  return <div>{itemsFiltrados.length}</div>;
+};
+
+// CON useMemo - Solo se recalcula si items cambia
+const Componente = ({ items }) => {
+  const itemsFiltrados = useMemo(
+    () => items.filter(item => item.active),
+    [items] // Solo recalcula si items cambia
+  );
+  return <div>{itemsFiltrados.length}</div>;
+};
+```
+
+---
+
+## 🔗 Props: Componente Padre a Hijo y Viceversa
+
+### ¿Qué son las Props?
+
+**Props = Propiedades = Parámetros de la Función del Componente**
+
+```jsx
+// Un componente es una función
+// Los props son los parámetros de esa función
+const MiComponente = (props) => {
+  // props es un objeto con todas las propiedades pasadas
+  return <div>{props.titulo}</div>;
+};
+
+// O con destructuring (más común)
+const MiComponente = ({ titulo, descripcion }) => {
+  // titulo y descripcion son props
+  return (
+    <div>
+      <h1>{titulo}</h1>
+      <p>{descripcion}</p>
+    </div>
+  );
+};
+```
+
+**Características de las Props:**
+1. **Inmutables**: El hijo NO puede modificar las props directamente
+2. **Unidireccionales**: Fluyen de padre → hijo (no al revés)
+3. **Read-only**: El hijo solo puede leerlas, no cambiarlas
+4. **Pueden ser cualquier tipo**: strings, números, objetos, arrays, funciones, componentes
+
+### Props: Comunicación Padre → Hijo
+
+**¿Qué son las Props?**
+- Props (propiedades) son datos que un componente padre pasa a un componente hijo
+- Son **inmutables** (el hijo no puede modificarlas directamente)
+- Son los **parámetros de la función** del componente
+
+**Ejemplo:**
+```jsx
+// Componente PADRE
+const App = () => {
+  const titulo = 'Mi Título';
+  const descripcion = 'Mi Descripción';
+  
+  // Pasa props al componente hijo
+  return (
+    <MiComponente 
+      titulo={titulo} 
+      descripcion={descripcion}
+      edad={25}
+    />
+  );
+};
+
+// Componente HIJO (recibe props como parámetros)
+const MiComponente = ({ titulo, descripcion, edad }) => {
+  // Usa las props recibidas
+  return (
+    <div>
+      <h1>{titulo}</h1>
+      <p>{descripcion}</p>
+      <p>Edad: {edad}</p>
+    </div>
+  );
+};
+```
+
+**Ejemplo Real del Proyecto:**
+```jsx
+// apps/web/src/pages/DashboardPage.jsx (PADRE)
+const DashboardPage = () => {
+  const { state } = useAppState();
+  const currentUser = state.currentUser;
+  
+  // Pasa currentUser como prop a RoleDashboard
+  return <RoleDashboard currentUser={currentUser} />;
+};
+
+// apps/web/src/components/RoleDashboard.jsx (HIJO)
+const RoleDashboard = ({ currentUser }) => {
+  // Usa la prop recibida
+  const userRole = currentUser?.role;
+  
+  switch (userRole) {
+    case 'Solicitante':
+      return <SolicitanteDashboard />;
+    // ...
+  }
+};
+```
+
+### Comunicación Hijo → Padre
+
+**¿Cómo comunica un hijo al padre?**
+- El padre pasa una **función** como prop al hijo
+- El hijo llama esa función cuando necesita comunicarse
+
+**Ejemplo:**
+```jsx
+// Componente PADRE
+const App = () => {
+  const [mensaje, setMensaje] = useState('');
+  
+  // Función que el hijo puede llamar
+  const handleMensajeDelHijo = (texto) => {
+    setMensaje(texto);
+    console.log('El hijo dijo:', texto);
+  };
+  
+  // Pasa la función como prop
+  return (
+    <div>
+      <p>Mensaje del hijo: {mensaje}</p>
+      <ComponenteHijo onMensaje={handleMensajeDelHijo} />
+    </div>
+  );
+};
+
+// Componente HIJO
+const ComponenteHijo = ({ onMensaje }) => {
+  const handleClick = () => {
+    // Llama la función del padre
+    onMensaje('Hola desde el hijo!');
+  };
+  
+  return <button onClick={handleClick}>Enviar Mensaje al Padre</button>;
+};
+```
+
+**Ejemplo Real del Proyecto:**
+```jsx
+// apps/web/src/pages/DashboardPage.jsx (PADRE)
+const DashboardPage = () => {
+  const handleLogout = () => {
+    dispatch({ type: 'SET_CURRENT_USER', payload: null });
+    navigate('/login');
+  };
+  
+  // Pasa handleLogout como prop
+  return <RoleDashboard onLogout={handleLogout} />;
+};
+
+// apps/web/src/components/RoleDashboard.jsx (HIJO)
+const RoleDashboard = ({ onLogout }) => {
+  return (
+    <div>
+      <button onClick={onLogout}>Cerrar Sesión</button>
+      {/* Al hacer click, ejecuta la función del padre */}
+    </div>
+  );
+};
+```
+
+### Tipos de Props
+
+**1. Props de Datos (Strings, Números, Objetos, Arrays)**
+```jsx
+<MiComponente 
+  titulo="Mi Título"
+  edad={25}
+  usuario={{ name: 'Juan', email: 'juan@email.com' }}
+  items={[1, 2, 3]}
+/>
+```
+
+**2. Props de Funciones (Callbacks)**
+```jsx
+<MiComponente 
+  onClick={() => console.log('clicked')}
+  onSubmit={handleSubmit}
+/>
+```
+
+**3. Props de Componentes (Children)**
+```jsx
+<MiComponente>
+  <p>Este es el children</p>
+  <button>Click</button>
+</MiComponente>
+
+// Dentro de MiComponente:
+const MiComponente = ({ children }) => {
+  return <div>{children}</div>; // Renderiza <p> y <button>
+};
+```
+
+**4. Props Condicionales**
+```jsx
+<MiComponente 
+  {...(condicion && { propExtra: 'valor' })}
+/>
+```
+
+### Resumen: Flujo de Props
+
+```
+┌─────────────────┐
+│  Componente     │
+│     PADRE       │
+│                 │
+│  [Estado]       │
+│     ↓           │
+│  Pasa Props     │
+└────────┬────────┘
+         │
+         │ props={datos}
+         │ onAction={función}
+         ↓
+┌────────┴────────┐
+│  Componente     │
+│     HIJO        │
+│                 │
+│  Recibe Props   │
+│  Usa datos      │
+│  Llama función  │
+└─────────────────┘
+```
+
+---
+
+## 🧩 Composición de Componentes
+
+### ¿Qué es la Composición?
+
+**Composición** = Construir componentes complejos combinando componentes más simples
+
+**Principio**: "Composición sobre Herencia"
+- En lugar de crear componentes grandes y complejos
+- Creas componentes pequeños y reutilizables
+- Los combinas para crear componentes más complejos
+
+### Ejemplo Básico de Composición
+
+```jsx
+// Componentes pequeños y simples
+const Boton = ({ children, onClick }) => (
+  <button onClick={onClick}>{children}</button>
+);
+
+const Titulo = ({ children }) => (
+  <h1>{children}</h1>
+);
+
+const Contenedor = ({ children }) => (
+  <div className="container">{children}</div>
+);
+
+// Composición: Combinar componentes simples
+const MiPagina = () => {
+  return (
+    <Contenedor>
+      <Titulo>Mi Página</Titulo>
+      <Boton onClick={() => alert('Click!')}>
+        Hacer Click
+      </Boton>
+    </Contenedor>
+  );
+};
+```
+
+### Composición con Children
+
+**Children = Contenido que se pasa entre las etiquetas**
+
+```jsx
+// Componente que acepta children
+const Card = ({ title, children }) => {
+  return (
+    <div className="card">
+      <h2>{title}</h2>
+      <div className="card-content">
+        {children} {/* Renderiza lo que se pasa entre <Card>...</Card> */}
+      </div>
+    </div>
+  );
+};
+
+// Uso: Componer Card con diferentes contenidos
+const App = () => {
+  return (
+    <Card title="Usuario">
+      <p>Nombre: Juan</p>
+      <p>Email: juan@email.com</p>
+    </Card>
+  );
+};
+```
+
+### Ejemplo Real del Proyecto: Composición
+
+```jsx
+// apps/web/src/pages/DashboardPage.jsx
+const DashboardPage = () => {
+  return (
+    <div>
+      <Header /> {/* Componente compuesto */}
+      <RoleDashboard /> {/* Componente compuesto */}
+      <Footer /> {/* Componente compuesto */}
+    </div>
+  );
+};
+
+// RoleDashboard compone otros componentes
+const RoleDashboard = ({ currentUser }) => {
+  switch (currentUser.role) {
+    case 'Solicitante':
+      return (
+        <SolicitanteDashboard> {/* Componente compuesto */}
+          <ServiceList /> {/* Componente hijo */}
+          <CreateServiceButton /> {/* Componente hijo */}
+        </SolicitanteDashboard>
+      );
+    // ...
+  }
+};
+```
+
+### Ventajas de la Composición
+
+1. **Reutilización**: Componentes pequeños se pueden usar en múltiples lugares
+2. **Mantenibilidad**: Fácil de entender y modificar
+3. **Flexibilidad**: Puedes combinar componentes de diferentes maneras
+4. **Testabilidad**: Componentes pequeños son más fáciles de testear
+
+### Patrones de Composición
+
+**1. Containment (Contención)**
+```jsx
+const Dialog = ({ children }) => (
+  <div className="dialog">
+    {children} {/* Cualquier contenido */}
+  </div>
+);
+```
+
+**2. Specialization (Especialización)**
+```jsx
+// Componente genérico
+const Button = ({ onClick, children }) => (
+  <button onClick={onClick}>{children}</button>
+);
+
+// Componente especializado (compone Button)
+const DeleteButton = ({ onDelete }) => (
+  <Button onClick={onDelete} className="delete">
+    Eliminar
+  </Button>
+);
+```
+
+**3. Higher-Order Components (HOC)**
+```jsx
+// Componente que envuelve otro componente
+const withAuth = (Component) => {
+  return (props) => {
+    const { currentUser } = useAppState();
+    if (!currentUser) return <Navigate to="/login" />;
+    return <Component {...props} />;
+  };
+};
+
+// Uso
+const ProtectedDashboard = withAuth(Dashboard);
+```
+
+---
+
+## 🔐 Cómo Funciona un Proceso de Autenticación
+
+### Flujo Completo de Autenticación
+
+#### 1. **Usuario Ingresa Credenciales**
+
+```jsx
+// apps/web/src/components/Login.jsx
+const Login = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const { login } = useAuth(); // Hook del AuthContext
+  
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    // Llama al método login del contexto
+    await login(email, password);
+  };
+  
+  return (
+    <form onSubmit={handleSubmit}>
+      <input value={email} onChange={(e) => setEmail(e.target.value)} />
+      <input value={password} onChange={(e) => setPassword(e.target.value)} />
+      <button type="submit">Iniciar Sesión</button>
+    </form>
+  );
+};
+```
+
+#### 2. **AuthContext Procesa el Login**
+
+```jsx
+// packages/core-logic/src/context/AuthContext.jsx
+export const AuthProvider = ({ children }) => {
+  const { state, dispatch } = useAppState();
+  
+  const login = async (email, password) => {
+    try {
+      // Llama al servicio de autenticación
+      const userData = await AuthService.login(email, password);
+      
+      // Guarda en localStorage (persistencia)
+      localStorage.setItem('currentUser', JSON.stringify(userData));
+      
+      // Actualiza el estado global
+      dispatch({ type: 'SET_CURRENT_USER', payload: userData });
+      
+      return userData;
+    } catch (error) {
+      throw error; // Propaga el error
+    }
+  };
+  
+  return (
+    <AuthContext.Provider value={{ login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+```
+
+#### 3. **AuthService Valida las Credenciales**
+
+```jsx
+// packages/core-logic/src/services/AuthService.js
+export const login = async (email, password) => {
+  // Busca el usuario en los datos mock
+  const user = initialState.users.find(
+    u => u.email === email && u.password === password
+  );
+  
+  if (!user) {
+    throw new Error('Credenciales inválidas');
+  }
+  
+  // Retorna el usuario (sin la contraseña)
+  const { password: _, ...userData } = user;
+  return userData;
+};
+```
+
+#### 4. **Estado Global se Actualiza**
+
+```jsx
+// packages/core-logic/src/context/AppReducer.js
+case 'SET_CURRENT_USER':
+  return {
+    ...state,
+    currentUser: action.payload // Actualiza el usuario actual
+  };
+```
+
+#### 5. **Componentes se Re-renderizan**
+
+```jsx
+// apps/web/src/router/ProtectedRoute.jsx
+const ProtectedRoute = ({ children }) => {
+  const { state } = useAppState();
+  const currentUser = state.currentUser;
+  
+  // Si hay usuario, permite acceso
+  if (currentUser) {
+    return children;
+  }
+  
+  // Si no hay usuario, redirige a login
+  return <Navigate to="/login" replace />;
+};
+```
+
+#### 6. **Persistencia: Cargar Usuario al Iniciar**
+
+```jsx
+// packages/core-logic/src/context/AuthContext.jsx
+export const AuthProvider = ({ children }) => {
+  const { state, dispatch } = useAppState();
+  
+  // Se ejecuta al montar el componente
+  useEffect(() => {
+    // Carga el usuario guardado en localStorage
+    const savedUser = localStorage.getItem('currentUser');
+    if (savedUser) {
+      const user = JSON.parse(savedUser);
+      dispatch({ type: 'SET_CURRENT_USER', payload: user });
+    }
+  }, [dispatch]);
+  
+  // ...
+};
+```
+
+### Diagrama del Flujo de Autenticación
+
+```
+1. Usuario → Login.jsx (ingresa email/password)
+   ↓
+2. Login.jsx → AuthContext.login(email, password)
+   ↓
+3. AuthContext → AuthService.login(email, password)
+   ↓
+4. AuthService → Valida contra usuarios mock
+   ↓
+5. AuthService → Retorna usuario (o error)
+   ↓
+6. AuthContext → Guarda en localStorage
+   ↓
+7. AuthContext → dispatch('SET_CURRENT_USER', user)
+   ↓
+8. AppReducer → Actualiza state.currentUser
+   ↓
+9. Todos los componentes → Se re-renderizan
+   ↓
+10. ProtectedRoute → Detecta usuario → Permite acceso
+   ↓
+11. DashboardPage → Renderiza según rol
+```
+
+---
+
+## 📱 React Native: Routing vs Stack, Fiber Tree
+
+### React Native: Routing vs Stack Navigator
+
+#### **Web: React Router (URL-based Routing)**
+
+```jsx
+// apps/web/src/router/AppRouter.jsx
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+
+<BrowserRouter>
+  <Routes>
+    <Route path="/" element={<LandingPage />} />
+    <Route path="/login" element={<LoginPage />} />
+    <Route path="/dashboard" element={<DashboardPage />} />
+  </Routes>
+</BrowserRouter>
+
+// Navegación: Cambia la URL
+navigate('/dashboard'); // URL cambia a /dashboard
+```
+
+**Características:**
+- Basado en URLs (cada ruta tiene una URL)
+- Puedes compartir URLs
+- El botón "atrás" del navegador funciona
+- Historial de navegación en el navegador
+
+#### **Mobile: React Navigation (Stack Navigator)**
+
+```jsx
+// apps/mobile/App.jsx
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
+const Stack = createNativeStackNavigator();
+
+<NavigationContainer>
+  <Stack.Navigator>
+    <Stack.Screen name="Login" component={LoginScreen} />
+    <Stack.Screen name="Dashboard" component={DashboardRouter} />
+    <Stack.Screen name="ServiceDetail" component={ServiceDetailScreen} />
+  </Stack.Navigator>
+</NavigationContainer>
+
+// Navegación: Cambia la pantalla en el stack
+navigation.navigate('Dashboard'); // Apila Dashboard sobre Login
+```
+
+**Características:**
+- Basado en Stack (pila de pantallas)
+- No hay URLs (es una app nativa)
+- Gestos nativos (swipe back en iOS)
+- Historial de navegación en el stack
+
+### Stack Navigator: ¿Cómo Funciona?
+
+**Stack = Pila de Pantallas**
+
+```
+┌─────────────────┐
+│ ServiceDetail   │ ← Pantalla actual (top del stack)
+├─────────────────┤
+│ Dashboard       │
+├─────────────────┤
+│ Login           │ ← Primera pantalla (bottom del stack)
+└─────────────────┘
+```
+
+**Operaciones:**
+- `navigation.navigate('Dashboard')` → Apila Dashboard sobre Login
+- `navigation.goBack()` → Desapila la pantalla actual
+- `navigation.replace('Dashboard')` → Reemplaza la pantalla actual
+
+**Ejemplo:**
+```jsx
+// LoginScreen
+const LoginScreen = ({ navigation }) => {
+  const handleLogin = () => {
+    // Apila Dashboard sobre Login
+    navigation.navigate('Dashboard');
+  };
+};
+
+// DashboardRouter
+const DashboardRouter = ({ navigation }) => {
+  const handleViewService = (serviceId) => {
+    // Apila ServiceDetail sobre Dashboard
+    navigation.navigate('ServiceDetail', { serviceId });
+  };
+  
+  const handleBack = () => {
+    // Desapila ServiceDetail, vuelve a Dashboard
+    navigation.goBack();
+  };
+};
+```
+
+### React Fiber Tree
+
+**¿Qué es React Fiber?**
+- Es el **motor de renderizado** de React
+- Es un algoritmo que decide **cuándo y cómo** renderizar componentes
+- Permite **interrupciones** y **priorización** de actualizaciones
+
+**Fiber Tree = Árbol de Componentes**
+
+```
+        App
+         │
+    ┌────┴────┐
+    │         │
+GlobalState  AuthProvider
+    │         │
+    │    ┌────┴────┐
+    │    │         │
+    │  AppRouter  Login
+    │    │
+    │  Routes
+    │    │
+    │  DashboardPage
+    │    │
+    │  RoleDashboard
+    │    │
+    │  SolicitanteDashboard
+```
+
+**¿Cómo funciona?**
+1. React crea un **Fiber Node** para cada componente
+2. Cada Fiber Node contiene:
+   - Referencia al componente
+   - Props
+   - Estado
+   - Referencias a hijos y hermanos
+3. React recorre el árbol (reconciliation)
+4. Compara el árbol anterior con el nuevo (diffing)
+5. Actualiza solo lo que cambió
+
+**Fases del Renderizado:**
+```
+1. Render Phase (Fase de Renderizado)
+   - React recorre el árbol
+   - Crea/actualiza Fiber Nodes
+   - NO modifica el DOM aún
+
+2. Commit Phase (Fase de Commit)
+   - React aplica los cambios al DOM
+   - Ejecuta useEffect
+   - Actualiza la UI visible
+```
+
+---
+
+## 🔄 Reconciliación (Reconciliation)
+
+### ¿Qué es la Reconciliación?
+
+**Reconciliación** = Proceso por el cual React compara el árbol anterior con el nuevo y decide qué actualizar
+
+**Objetivo**: Actualizar el DOM de la manera más eficiente posible
+
+### Proceso de Reconciliación
+
+```
+1. Estado cambia (setState)
+   ↓
+2. React crea nuevo Virtual DOM Tree
+   ↓
+3. RECONCILIACIÓN: Compara árbol anterior vs nuevo
+   ↓
+4. Identifica qué cambió (diffing)
+   ↓
+5. Calcula las actualizaciones mínimas necesarias
+   ↓
+6. Aplica cambios al DOM real
+```
+
+### Algoritmo de Reconciliación
+
+**React compara nodo por nodo:**
+
+```jsx
+// Árbol anterior
+<div>
+  <h1>Título</h1>
+  <p>Texto</p>
+</div>
+
+// Árbol nuevo (después de setState)
+<div>
+  <h1>Título Nuevo</h1>  {/* Cambió el texto */}
+  <p>Texto</p>            {/* No cambió */}
+</div>
+
+// React detecta:
+// - El <div> es el mismo → No cambia
+// - El <h1> es el mismo tipo → Solo actualiza el texto
+// - El <p> es igual → No toca
+```
+
+### Reglas de Reconciliación
+
+**1. Comparación por Tipo de Elemento**
+
+```jsx
+// Si el tipo cambia, React reemplaza TODO el subárbol
+<div>
+  <Counter />  {/* Componente Counter */}
+</div>
+
+// Cambia a:
+<div>
+  <Button />   {/* Tipo diferente → React desmonta Counter y monta Button */}
+</div>
+```
+
+**2. Comparación por Props**
+
+```jsx
+// Props cambian → React actualiza solo las props
+<Componente nombre="Juan" edad={25} />
+// Cambia a:
+<Componente nombre="María" edad={25} />
+// React actualiza solo la prop 'nombre'
+```
+
+**3. Comparación por Key (en listas)**
+
+```jsx
+// SIN key: React no sabe qué elemento cambió
+{items.map(item => <Item data={item} />)}
+
+// CON key: React identifica cada elemento
+{items.map(item => <Item key={item.id} data={item} />)}
+```
+
+### Ejemplo Detallado de Reconciliación
+
+```jsx
+const App = () => {
+  const [count, setCount] = useState(0);
+  
+  return (
+    <div>
+      <h1>Count: {count}</h1>
+      <button onClick={() => setCount(count + 1)}>Incrementar</button>
+    </div>
+  );
+};
+
+// Render inicial (count = 0):
+// Virtual DOM: { type: 'div', children: [
+//   { type: 'h1', children: ['Count: 0'] },
+//   { type: 'button', children: ['Incrementar'] }
+// ]}
+
+// Usuario hace click → setCount(1)
+// React crea nuevo Virtual DOM: { type: 'div', children: [
+//   { type: 'h1', children: ['Count: 1'] },  ← Solo esto cambió
+//   { type: 'button', children: ['Incrementar'] }  ← No cambió
+// ]}
+
+// Reconciliación:
+// 1. Compara <div> → Mismo tipo, mismo → No cambia
+// 2. Compara <h1> → Mismo tipo, pero children cambió → Actualiza solo el texto
+// 3. Compara <button> → Mismo tipo, mismo → No toca
+
+// Resultado: Solo actualiza el texto "Count: 0" → "Count: 1"
+// NO re-renderiza el botón
+```
+
+### Optimizaciones de Reconciliación
+
+**1. Batching (Agrupación)**
+```jsx
+// React agrupa múltiples setState en una sola actualización
+setCount(1);
+setName('Juan');
+setEmail('juan@email.com');
+// React hace UNA sola reconciliación, no tres
+```
+
+**2. Memoización**
+```jsx
+// React.memo evita re-render si props no cambian
+const MiComponente = React.memo(({ nombre }) => {
+  return <div>{nombre}</div>;
+});
+
+// Solo se re-renderiza si 'nombre' cambia
+```
+
+**3. Keys en Listas**
+```jsx
+// Con keys, React identifica qué elemento cambió
+{items.map(item => (
+  <Item key={item.id} data={item} />
+))}
+```
+
+### Reconciliación vs Diffing
+
+**Reconciliación** = Proceso completo de comparar y actualizar
+**Diffing** = Algoritmo específico que compara dos árboles
+
+```
+Reconciliación
+  ├── Diffing (comparar árboles)
+  ├── Identificar cambios
+  ├── Calcular actualizaciones mínimas
+  └── Aplicar cambios al DOM
+```
+
+### Ejemplo Real del Proyecto
+
+```jsx
+// apps/web/src/components/ServiceList.jsx
+const ServiceList = () => {
+  const { state } = useAppState();
+  const [filter, setFilter] = useState('');
+  
+  const serviciosFiltrados = state.services.filter(/* ... */);
+  
+  return (
+    <div>
+      {serviciosFiltrados.map(service => (
+        <ServiceCard key={service.id} service={service} />
+      ))}
+    </div>
+  );
+};
+
+// Cuando state.services cambia:
+// 1. React crea nuevo Virtual DOM
+// 2. Reconciliación: Compara lista anterior vs nueva
+// 3. Si service.id es igual → Reutiliza el componente ServiceCard
+// 4. Si service.id es diferente → Desmonta viejo, monta nuevo
+// 5. Solo actualiza los ServiceCard que cambiaron
+```
+
+---
+
+## 🌳 Virtual DOM: Montaje, Update, Unmount
+
+### ¿Qué es el Virtual DOM?
+
+**Virtual DOM** = Representación en memoria del DOM real
+
+```
+┌─────────────────────────────────────┐
+│         Virtual DOM                 │
+│  (Objetos JavaScript en memoria)    │
+│                                     │
+│  {                                  │
+│    type: 'div',                     │
+│    props: { className: 'container' },│
+│    children: [                       │
+│      { type: 'h1', props: {...} }  │
+│    ]                                 │
+│  }                                  │
+└─────────────────────────────────────┘
+              ↓
+         React compara
+              ↓
+┌─────────────────────────────────────┐
+│         Real DOM                    │
+│  (HTML en el navegador)             │
+│                                     │
+│  <div class="container">           │
+│    <h1>...</h1>                    │
+│  </div>                             │
+└─────────────────────────────────────┘
+```
+
+### ¿Por qué Virtual DOM?
+
+**Ventajas:**
+1. **Rendimiento**: Comparar objetos JavaScript es más rápido que manipular el DOM
+2. **Optimización**: React decide qué actualizar
+3. **Batching**: Agrupa múltiples actualizaciones
+4. **Diffing**: Solo actualiza lo que cambió
+
+### Proceso: Montaje (Mount)
+
+**¿Qué pasa cuando un componente se monta?**
+
+```jsx
+const MiComponente = () => {
+  return <div><h1>Hola</h1></div>;
+};
+
+// React crea el Virtual DOM:
+const virtualDOM = {
+  type: 'div',
+  props: {},
+  children: [
+    {
+      type: 'h1',
+      props: {},
+      children: ['Hola']
+    }
+  ]
+};
+
+// React compara con el DOM real (no existe aún)
+// React crea los elementos en el DOM real:
+// <div><h1>Hola</h1></div>
+```
+
+**Flujo de Montaje:**
+```
+1. React crea Virtual DOM Node
+   ↓
+2. React compara con DOM real (no existe)
+   ↓
+3. React crea elementos en DOM real
+   ↓
+4. Componente está montado
+```
+
+### Proceso: Actualización (Update)
+
+**¿Qué pasa cuando cambia el estado?**
+
+```jsx
+const MiComponente = () => {
+  const [count, setCount] = useState(0);
+  
+  return <div><h1>Count: {count}</h1></div>;
+};
+
+// Estado inicial: count = 0
+// Virtual DOM: { type: 'h1', children: ['Count: 0'] }
+// Real DOM: <h1>Count: 0</h1>
+
+// Usuario hace click → setCount(1)
+// React crea nuevo Virtual DOM: { type: 'h1', children: ['Count: 1'] }
+// React compara Virtual DOM anterior con nuevo (diffing)
+// React detecta que solo cambió el texto
+// React actualiza solo el texto en el DOM real: <h1>Count: 1</h1>
+```
+
+**Flujo de Actualización:**
+```
+1. Cambia el estado (setCount)
+   ↓
+2. React marca el componente para re-renderizar
+   ↓
+3. React crea nuevo Virtual DOM
+   ↓
+4. React compara Virtual DOM anterior con nuevo (diffing)
+   ↓
+5. React identifica qué cambió
+   ↓
+6. React actualiza solo lo que cambió en el DOM real
+```
+
+**Diffing Algorithm (Algoritmo de Comparación):**
+- Compara nodo por nodo
+- Si el tipo es igual → Actualiza props
+- Si el tipo es diferente → Reemplaza el nodo completo
+- Si hay keys → Compara por key
+
+### Proceso: Desmontaje (Unmount)
+
+**¿Qué pasa cuando un componente se desmonta?**
+
+```jsx
+const App = () => {
+  const [show, setShow] = useState(true);
+  
+  return (
+    <div>
+      {show && <MiComponente />}
+      <button onClick={() => setShow(false)}>Ocultar</button>
+    </div>
+  );
+};
+
+// Cuando show cambia a false:
+// React elimina el Virtual DOM Node de MiComponente
+// React elimina los elementos del DOM real
+// React ejecuta cleanup de useEffect (si existe)
+```
+
+**Flujo de Desmontaje:**
+```
+1. Condición cambia (show = false)
+   ↓
+2. React elimina Virtual DOM Node
+   ↓
+3. React ejecuta cleanup de useEffect
+   ↓
+4. React elimina elementos del DOM real
+   ↓
+5. Componente está desmontado
+```
+
+### Resumen: Virtual DOM
+
+| Fase | Virtual DOM | Real DOM | useEffect |
+|------|-------------|----------|-----------|
+| **Mount** | Se crea | Se crea | Se ejecuta (si [] está vacío) |
+| **Update** | Se actualiza | Se actualiza (solo lo que cambió) | Se ejecuta (si dependencias cambiaron) |
+| **Unmount** | Se elimina | Se elimina | Cleanup se ejecuta |
+
+---
+
+## 🎯 Preguntas Frecuentes para la Defensa
 
 #### ¿Por qué React y no Vue o Angular?
-- React tiene un ecosistema grande
+- React tiene un ecosistema grande y maduro
 - Facilita compartir código entre web y mobile (React Native)
-- Gran comunidad y recursos
+- Gran comunidad y recursos disponibles
+- Flexibilidad en la arquitectura
 
 #### ¿Por qué no Next.js?
 - Este proyecto es una SPA (Single Page Application)
 - Next.js es para SSR/SSG que no necesitamos aquí
 - Vite es más simple y rápido para SPAs
+- No necesitamos SEO para esta aplicación
 
 #### ¿Por qué CSS y no SCSS?
 - Simplicidad para el MVP
 - No requiere compilación adicional
 - Fácil de entender para el equipo
+- Suficiente para las necesidades actuales
 
 #### ¿Por qué Context y no Redux?
 - El proyecto es de tamaño medio
 - Context es suficiente y más simple
 - Redux sería overkill para este caso
+- Menos boilerplate code
 
 #### ¿Cómo funciona el estado global?
 - `GlobalStateProvider` envuelve toda la app
@@ -1532,6 +3821,7 @@ const SolicitanteDashboard = () => {
 - Todo el código compartido está en `packages/core-logic`
 - Web y mobile importan desde ahí usando alias (`@core-logic`)
 - Solo la UI es diferente (web usa HTML/CSS, mobile usa componentes nativos)
+- La lógica de negocio es idéntica
 
 ---
 
