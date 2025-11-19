@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, TextInput, TouchableOpacity, Alert, FlatList } from 'react-native';
 import { useAppState } from '../../../../packages/core-logic/src/context/GlobalStateContext';
 import PublicServiceCard from '../components/PublicServiceCard';
 import MenuButton from '../components/MenuButton';
@@ -13,13 +13,44 @@ export default function ServiceListScreen({ navigation, onLogout }) {
   const { state } = useAppState();
   const currentUser = state.currentUser;
   const [menuVisible, setMenuVisible] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [locationFilter, setLocationFilter] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
 
-  // Filtrar servicios publicados
+  // Categorías disponibles
+  const categories = [
+    { value: '', label: 'Todas las categorías' },
+    { value: 'jardineria', label: 'Jardinería' },
+    { value: 'piscinas', label: 'Piscinas' },
+    { value: 'limpieza', label: 'Limpieza' },
+    { value: 'construccion', label: 'Construcción' },
+    { value: 'electricidad', label: 'Electricidad' },
+    { value: 'plomeria', label: 'Plomería' },
+    { value: 'pintura', label: 'Pintura' },
+    { value: 'otros', label: 'Otros' }
+  ];
+
+  // Filtrar servicios publicados con filtros avanzados
   const publishedServices = useMemo(() => {
-    return state.services.filter(
-      (service) => (service.status?.toLowerCase() || '').trim() === 'publicado'
-    );
-  }, [state.services]);
+    return state.services.filter((service) => {
+      if ((service.status?.toLowerCase() || '').trim() !== 'publicado') return false;
+
+      // Filtro por categoría
+      const matchesCategory = !categoryFilter || service.category === categoryFilter;
+
+      // Filtro por ubicación
+      const matchesLocation = !locationFilter || 
+        (service.location && service.location.toLowerCase().includes(locationFilter.toLowerCase()));
+
+      // Búsqueda por texto (título o descripción)
+      const matchesSearch = !searchQuery || 
+        (service.title && service.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (service.description && service.description.toLowerCase().includes(searchQuery.toLowerCase()));
+
+      return matchesCategory && matchesLocation && matchesSearch;
+    });
+  }, [state.services, categoryFilter, locationFilter, searchQuery]);
 
   const handleServicePress = (service) => {
     if (!navigation) return;
@@ -58,6 +89,89 @@ export default function ServiceListScreen({ navigation, onLogout }) {
           <Text style={styles.dashboardSubtitle}>
             Selecciona un servicio para enviar tu cotización u oferta
           </Text>
+        </View>
+
+        {/* Búsqueda y Filtros */}
+        <View style={styles.filterSection}>
+          <View style={styles.searchHeader}>
+            <Text style={styles.sectionTitle}>Filtros</Text>
+            <TouchableOpacity
+              style={styles.filterToggleButton}
+              onPress={() => setShowFilters(!showFilters)}
+            >
+              <Text style={styles.filterToggleText}>
+                {showFilters ? '✕ Ocultar' : '🔍 Filtros'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Búsqueda */}
+          <View style={styles.searchContainer}>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Buscar por título o descripción..."
+              placeholderTextColor="#999"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+          </View>
+
+          {/* Filtros avanzados */}
+          {showFilters && (
+            <View style={styles.advancedFiltersContainer}>
+              <View style={styles.filterRow}>
+                <Text style={styles.filterLabel}>Categoría:</Text>
+                <TouchableOpacity
+                  style={styles.filterPicker}
+                  onPress={() => {
+                    Alert.alert(
+                      'Filtrar por Categoría',
+                      '',
+                      [
+                        ...categories.map((cat) => ({
+                          text: cat.label,
+                          onPress: () => setCategoryFilter(cat.value),
+                        })),
+                        { text: 'Limpiar', onPress: () => setCategoryFilter(''), style: 'destructive' },
+                        { text: 'Cancelar', style: 'cancel' },
+                      ],
+                      { cancelable: true }
+                    );
+                  }}
+                >
+                  <Text style={styles.filterPickerText}>
+                    {categoryFilter
+                      ? categories.find((c) => c.value === categoryFilter)?.label || 'Todas'
+                      : 'Todas'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.filterRow}>
+                <Text style={styles.filterLabel}>Ubicación:</Text>
+                <TextInput
+                  style={styles.filterInput}
+                  placeholder="Filtrar por ubicación..."
+                  placeholderTextColor="#999"
+                  value={locationFilter}
+                  onChangeText={setLocationFilter}
+                />
+              </View>
+
+              {(categoryFilter || locationFilter || searchQuery) && (
+                <TouchableOpacity
+                  style={styles.clearFiltersButton}
+                  onPress={() => {
+                    setCategoryFilter('');
+                    setLocationFilter('');
+                    setSearchQuery('');
+                  }}
+                >
+                  <Text style={styles.clearFiltersText}>Limpiar todos los filtros</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
         </View>
 
         {/* Lista de servicios */}
@@ -182,6 +296,103 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#999',
     textAlign: 'center',
+  },
+  filterSection: {
+    backgroundColor: '#fff',
+    padding: 16,
+    marginBottom: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#eee',
+    marginHorizontal: 20,
+    marginTop: 20,
+  },
+  searchHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#333',
+    flex: 1,
+  },
+  filterToggleButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 6,
+  },
+  filterToggleText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#007AFF',
+  },
+  searchContainer: {
+    marginBottom: 12,
+  },
+  searchInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    backgroundColor: '#fff',
+    color: '#333',
+  },
+  advancedFiltersContainer: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+  },
+  filterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  filterLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    width: 90,
+    marginRight: 8,
+  },
+  filterPicker: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 6,
+    padding: 10,
+    backgroundColor: '#fff',
+  },
+  filterPickerText: {
+    fontSize: 14,
+    color: '#333',
+  },
+  filterInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 6,
+    padding: 10,
+    fontSize: 14,
+    backgroundColor: '#fff',
+    color: '#333',
+  },
+  clearFiltersButton: {
+    marginTop: 8,
+    padding: 10,
+    backgroundColor: '#ff3b30',
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  clearFiltersText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
 

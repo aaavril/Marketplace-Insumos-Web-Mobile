@@ -94,8 +94,50 @@ export const AppReducer = (state, action) => {
     // - DELETE_SERVICE: Eliminar servicio
     
     // ==================== COTIZACIONES ====================
-    // - ADD_QUOTE: Crear nueva cotización
-    // - UPDATE_QUOTE: Actualizar cotización
+    
+    /**
+     * UPDATE_QUOTE - Actualiza una cotización existente
+     * payload: { serviceId: string, quoteId: string, quote: Object }
+     */
+    case 'UPDATE_QUOTE': {
+      const { serviceId, quoteId, quote } = action.payload;
+      return {
+        ...state,
+        services: state.services.map(service =>
+          service.id === serviceId
+            ? {
+                ...service,
+                quotes: service.quotes?.map(q =>
+                  q.id === quoteId ? { ...q, ...quote } : q
+                ) || []
+              }
+            : service
+        ),
+        quotes: state.quotes.map(q =>
+          q.id === quoteId ? { ...q, ...quote } : q
+        )
+      };
+    }
+
+    /**
+     * DELETE_QUOTE - Elimina una cotización
+     * payload: { serviceId: string, quoteId: string }
+     */
+    case 'DELETE_QUOTE': {
+      const { serviceId, quoteId } = action.payload;
+      return {
+        ...state,
+        services: state.services.map(service =>
+          service.id === serviceId
+            ? {
+                ...service,
+                quotes: service.quotes?.filter(q => q.id !== quoteId) || []
+              }
+            : service
+        ),
+        quotes: state.quotes.filter(q => q.id !== quoteId)
+      };
+    }
     
     // ==================== OFERTAS DE INSUMOS ====================
     /**

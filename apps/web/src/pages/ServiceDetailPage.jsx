@@ -17,6 +17,7 @@ const ServiceDetailPage = () => {
   const { state, dispatch } = useAppState();
   const { user } = useAuth();
   const [showComparator, setShowComparator] = useState(false);
+  const [editingQuote, setEditingQuote] = useState(null);
 
   const service = useMemo(
     () => state.services.find((item) => item.id === id),
@@ -122,6 +123,47 @@ const ServiceDetailPage = () => {
 
   const getProviderProfile = (providerId) =>
     state.users.find((user) => user.id === providerId) ?? null;
+
+  /**
+   * Maneja la edición de una cotización
+   */
+  const handleEditQuote = (quote) => {
+    setEditingQuote(quote);
+  };
+
+  /**
+   * Maneja la eliminación de una cotización
+   */
+  const handleDeleteQuote = (quoteId) => {
+    if (window.confirm('¿Estás seguro de que quieres eliminar esta cotización?')) {
+      dispatch({
+        type: 'DELETE_QUOTE',
+        payload: { serviceId: service.id, quoteId }
+      });
+    }
+  };
+
+  /**
+   * Cancela la edición de cotización
+   */
+  const handleCancelEdit = () => {
+    setEditingQuote(null);
+  };
+
+  /**
+   * Guarda los cambios de una cotización editada
+   */
+  const handleSaveEdit = (updatedQuote) => {
+    dispatch({
+      type: 'UPDATE_QUOTE',
+      payload: {
+        serviceId: service.id,
+        quoteId: editingQuote.id,
+        quote: updatedQuote
+      }
+    });
+    setEditingQuote(null);
+  };
 
   return (
     <div className="service-detail-page">
@@ -381,40 +423,94 @@ const ServiceDetailPage = () => {
         <aside className="detail-card sidebar">
           {isServiceProvider ? (
             <>
-              <QuoteForm serviceId={service.id} />
+              <QuoteForm 
+                serviceId={service.id} 
+                editingQuote={editingQuote}
+                onSave={handleSaveEdit}
+                onCancel={handleCancelEdit}
+              />
               <div className="quotes-summary">
                 <h3>Cotizaciones enviadas</h3>
                 {service.quotes && service.quotes.length > 0 ? (
                   <ul className="quotes-list">
-                    {service.quotes.map((quote) => (
-                      <li key={quote.id} className="quote-item">
-                        <div className="quote-header">
-                          <span className="quote-provider">
-                            {getProviderName(quote.serviceProviderId)}
-                          </span>
-                          <span className="quote-price">
-                            USD {quote.price.toLocaleString('es-UY', { minimumFractionDigits: 2 })}
-                          </span>
-                        </div>
-                        <div className="quote-deadline">
-                          <span className="meta-icon">⏳</span>
-                          <span>
-                            {quote.duration
-                              ? `Duración: ${quote.duration} día${quote.duration === 1 ? '' : 's'}`
-                              : 'Duración no indicada'}
-                          </span>
-                        </div>
-                        {quote.deadline && (
-                          <div className="quote-deadline">
-                            <span className="meta-icon">📅</span>
-                            <span>Fecha estimada: {quote.deadline}</span>
+                    {service.quotes.map((quote) => {
+                      const isMyQuote = quote.serviceProviderId === user.id;
+                      const canEditDelete = isMyQuote && 
+                        (service.status === 'Publicado' || service.status === 'En Evaluación');
+                      
+                      return (
+                        <li key={quote.id} className="quote-item">
+                          <div className="quote-header">
+                            <span className="quote-provider">
+                              {getProviderName(quote.serviceProviderId)}
+                              {isMyQuote && <span style={{ fontSize: '12px', color: '#666', marginLeft: '8px' }}>(Tú)</span>}
+                            </span>
+                            <span className="quote-price">
+                              USD {quote.price.toLocaleString('es-UY', { minimumFractionDigits: 2 })}
+                            </span>
                           </div>
-                        )}
-                        {quote.notes && (
-                          <p className="quote-notes">{quote.notes}</p>
-                        )}
-                      </li>
-                    ))}
+                          <div className="quote-deadline">
+                            <span className="meta-icon">⏳</span>
+                            <span>
+                              {quote.duration
+                                ? `Duración: ${quote.duration} día${quote.duration === 1 ? '' : 's'}`
+                                : 'Duración no indicada'}
+                            </span>
+                          </div>
+                          {quote.deadline && (
+                            <div className="quote-deadline">
+                              <span className="meta-icon">📅</span>
+                              <span>Fecha estimada: {quote.deadline}</span>
+                            </div>
+                          )}
+                          {quote.notes && (
+                            <p className="quote-notes">{quote.notes}</p>
+                          )}
+                          {canEditDelete && (
+                            <div style={{ 
+                              marginTop: '12px', 
+                              display: 'flex', 
+                              gap: '8px',
+                              paddingTop: '12px',
+                              borderTop: '1px solid #eee'
+                            }}>
+                              <button
+                                type="button"
+                                onClick={() => handleEditQuote(quote)}
+                                style={{
+                                  padding: '6px 12px',
+                                  backgroundColor: '#007bff',
+                                  color: '#fff',
+                                  border: 'none',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                  fontSize: '13px',
+                                  fontWeight: '500'
+                                }}
+                              >
+                                ✏️ Editar
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteQuote(quote.id)}
+                                style={{
+                                  padding: '6px 12px',
+                                  backgroundColor: '#dc3545',
+                                  color: '#fff',
+                                  border: 'none',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                  fontSize: '13px',
+                                  fontWeight: '500'
+                                }}
+                              >
+                                🗑️ Eliminar
+                              </button>
+                            </div>
+                          )}
+                        </li>
+                      );
+                    })}
                   </ul>
                 ) : (
                   <div className="quote-empty">

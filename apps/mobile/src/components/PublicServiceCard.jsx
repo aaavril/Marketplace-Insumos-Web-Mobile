@@ -13,7 +13,23 @@ export default function PublicServiceCard({ service, onPress }) {
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.header}>
-        <Text style={styles.title}>{service.title}</Text>
+        <View style={styles.headerLeft}>
+          <Text style={styles.title}>{service.title}</Text>
+          {service.category && (
+            <View style={styles.categoryBadge}>
+              <Text style={styles.categoryText}>
+                {service.category === 'jardineria' ? 'Jardinería' :
+                 service.category === 'piscinas' ? 'Piscinas' :
+                 service.category === 'limpieza' ? 'Limpieza' :
+                 service.category === 'construccion' ? 'Construcción' :
+                 service.category === 'electricidad' ? 'Electricidad' :
+                 service.category === 'plomeria' ? 'Plomería' :
+                 service.category === 'pintura' ? 'Pintura' :
+                 service.category === 'otros' ? 'Otros' : service.category}
+              </Text>
+            </View>
+          )}
+        </View>
         <View style={styles.statusBadge}>
           <Text style={styles.statusText}>{service.status}</Text>
         </View>
@@ -66,13 +82,28 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 8,
   },
-  title: {
+  headerLeft: {
     flex: 1,
+    marginRight: 12,
+  },
+  title: {
     fontSize: 18,
     fontWeight: '700',
     color: '#333',
     lineHeight: 24,
-    marginRight: 12,
+    marginBottom: 6,
+  },
+  categoryBadge: {
+    backgroundColor: '#e3f2fd',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    alignSelf: 'flex-start',
+  },
+  categoryText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#1976d2',
   },
   statusBadge: {
     backgroundColor: '#e3f2fd',

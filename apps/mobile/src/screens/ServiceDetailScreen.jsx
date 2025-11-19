@@ -98,10 +98,63 @@ export default function ServiceDetailScreen({ navigation, route }) {
     Alert.alert('Éxito', 'Cotización seleccionada. El servicio ha sido asignado al proveedor.');
   };
 
+  const [editingQuote, setEditingQuote] = useState(null);
+
   const handleCotizar = () => {
-    if (navigation && service) {
-      navigation.navigate('QuoteForm', { serviceId: service.id, service });
+    // Verificar que el servicio aún esté disponible para cotizar
+    if (service.status === 'Asignado' || service.status === 'Completado') {
+      Alert.alert('Error', 'Este servicio ya ha sido asignado. No se pueden agregar nuevas cotizaciones.');
+      return;
     }
+    
+    if (navigation && service) {
+      if (editingQuote) {
+        // Si hay una cotización en edición, navegar al formulario con esa cotización
+        navigation.navigate('QuoteForm', { 
+          serviceId: service.id, 
+          service,
+          editingQuote 
+        });
+      } else {
+        navigation.navigate('QuoteForm', { serviceId: service.id, service });
+      }
+    }
+  };
+
+  const handleEditQuote = (quote) => {
+    setEditingQuote(quote);
+    if (navigation && service) {
+      navigation.navigate('QuoteForm', { 
+        serviceId: service.id, 
+        service,
+        editingQuote: quote 
+      });
+    }
+  };
+
+  const handleDeleteQuote = (quoteId) => {
+    Alert.alert(
+      'Eliminar Cotización',
+      '¿Estás seguro de que quieres eliminar esta cotización?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar',
+          style: 'destructive',
+          onPress: () => {
+            dispatch({
+              type: 'DELETE_QUOTE',
+              payload: { serviceId: service.id, quoteId }
+            });
+            Alert.alert('Éxito', 'Cotización eliminada correctamente');
+          }
+        }
+      ]
+    );
+  };
+
+  const handleCancelEdit = () => {
+    setEditingQuote(null);
   };
 
   const handleCompleted = () => {
@@ -370,43 +423,83 @@ export default function ServiceDetailScreen({ navigation, route }) {
         {/* Vista para Proveedor de Servicio */}
         {isServiceProvider && (
           <View style={styles.providerSection}>
-            <TouchableOpacity style={styles.cotizarButton} onPress={handleCotizar}>
-              <Text style={styles.cotizarButtonText}>
-                {myQuote ? 'Editar mi cotización' : 'Enviar cotización'}
-              </Text>
-            </TouchableOpacity>
+            {/* Botón de cotizar/editar - bloqueado si está asignado */}
+            {(service.status === 'Publicado' || service.status === 'En Evaluación') ? (
+              <TouchableOpacity 
+                style={styles.cotizarButton} 
+                onPress={handleCotizar}
+                disabled={service.status === 'Asignado' || service.status === 'Completado'}
+              >
+                <Text style={styles.cotizarButtonText}>
+                  {myQuote ? 'Editar mi cotización' : 'Enviar cotización'}
+                </Text>
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.blockedQuoteButton}>
+                <Text style={styles.blockedQuoteText}>
+                  ⚠️ Este servicio ya ha sido asignado. No se pueden agregar nuevas cotizaciones.
+                </Text>
+              </View>
+            )}
 
             {service.quotes && service.quotes.length > 0 && (
               <View style={styles.quotesSummary}>
                 <Text style={styles.sectionTitle}>Cotizaciones enviadas</Text>
                 <View style={styles.quotesList}>
-                  {service.quotes.map((quote) => (
-                    <View key={quote.id} style={styles.quoteCard}>
-                      <View style={styles.quoteHeader}>
-                        <Text style={styles.quoteProviderName}>
-                          {getProviderName(state.users, quote.serviceProviderId)}
-                        </Text>
-                        <Text style={styles.quotePrice}>
-                          USD {quote.price.toLocaleString('es-UY', { minimumFractionDigits: 2 })}
-                        </Text>
-                      </View>
-                      <View style={styles.quoteMeta}>
-                        <Text style={styles.quoteMetaText}>
-                          ⏳ {quote.duration
-                            ? `Duración: ${quote.duration} día${quote.duration === 1 ? '' : 's'}`
-                            : 'Duración no indicada'}
-                        </Text>
-                        {quote.deadline && (
-                          <Text style={styles.quoteMetaText}>
-                            📅 Fecha estimada: {quote.deadline}
+                  {service.quotes.map((quote) => {
+                    const isMyQuote = quote.serviceProviderId === currentUser?.id;
+                    const canEditDelete = isMyQuote && 
+                      (service.status === 'Publicado' || service.status === 'En Evaluación');
+                    
+                    return (
+                      <View key={quote.id} style={styles.quoteCard}>
+                        <View style={styles.quoteHeader}>
+                          <View style={styles.quoteProviderInfo}>
+                            <Text style={styles.quoteProviderName}>
+                              {getProviderName(state.users, quote.serviceProviderId)}
+                            </Text>
+                            {isMyQuote && (
+                              <Text style={styles.myQuoteLabel}>(Tú)</Text>
+                            )}
+                          </View>
+                          <Text style={styles.quotePrice}>
+                            USD {quote.price.toLocaleString('es-UY', { minimumFractionDigits: 2 })}
                           </Text>
+                        </View>
+                        <View style={styles.quoteMeta}>
+                          <Text style={styles.quoteMetaText}>
+                            ⏳ {quote.duration
+                              ? `Duración: ${quote.duration} día${quote.duration === 1 ? '' : 's'}`
+                              : 'Duración no indicada'}
+                          </Text>
+                          {quote.deadline && (
+                            <Text style={styles.quoteMetaText}>
+                              📅 Fecha estimada: {quote.deadline}
+                            </Text>
+                          )}
+                        </View>
+                        {quote.notes && (
+                          <Text style={styles.quoteNotes}>{quote.notes}</Text>
+                        )}
+                        {canEditDelete && (
+                          <View style={styles.quoteActions}>
+                            <TouchableOpacity
+                              style={styles.editQuoteButton}
+                              onPress={() => handleEditQuote(quote)}
+                            >
+                              <Text style={styles.editQuoteButtonText}>✏️ Editar</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={styles.deleteQuoteButton}
+                              onPress={() => handleDeleteQuote(quote.id)}
+                            >
+                              <Text style={styles.deleteQuoteButtonText}>🗑️ Eliminar</Text>
+                            </TouchableOpacity>
+                          </View>
                         )}
                       </View>
-                      {quote.notes && (
-                        <Text style={styles.quoteNotes}>{quote.notes}</Text>
-                      )}
-                    </View>
-                  ))}
+                    );
+                  })}
                 </View>
               </View>
             )}
@@ -896,6 +989,63 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: '700',
+  },
+  blockedQuoteButton: {
+    backgroundColor: '#fff3cd',
+    borderWidth: 1,
+    borderColor: '#ffc107',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+  },
+  blockedQuoteText: {
+    fontSize: 14,
+    color: '#856404',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  quoteProviderInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  myQuoteLabel: {
+    fontSize: 12,
+    color: '#666',
+    marginLeft: 8,
+    fontStyle: 'italic',
+  },
+  quoteActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+  },
+  editQuoteButton: {
+    flex: 1,
+    backgroundColor: '#007AFF',
+    borderRadius: 8,
+    padding: 10,
+    alignItems: 'center',
+  },
+  editQuoteButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  deleteQuoteButton: {
+    flex: 1,
+    backgroundColor: '#ff3b30',
+    borderRadius: 8,
+    padding: 10,
+    alignItems: 'center',
+  },
+  deleteQuoteButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
   quotesSummary: {
     marginTop: 20,

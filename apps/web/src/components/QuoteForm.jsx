@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppState } from '@core-logic/context/GlobalStateContext';
 import { useAuth } from '@core-logic/context/AuthContext';
 import './QuoteForm.css';
@@ -6,10 +6,15 @@ import './QuoteForm.css';
 /**
  * QuoteForm - Formulario para que un Proveedor de Servicio envíe una cotización
  * F3.HU1: Permite ingresar precio total, plazo y notas.
+ * Bloquea cotizaciones si el servicio está "Asignado" o "Completado"
  */
 const QuoteForm = ({ serviceId }) => {
-  const { dispatch } = useAppState();
+  const { state, dispatch } = useAppState();
   const { user } = useAuth();
+
+  // Obtener el servicio actual para verificar su estado
+  const service = state.services.find((s) => s.id === serviceId);
+  const isServiceAssigned = service?.status === 'Asignado' || service?.status === 'Completado';
 
   const [price, setPrice] = useState('');
   const [deadline, setDeadline] = useState('');
@@ -21,6 +26,31 @@ const QuoteForm = ({ serviceId }) => {
 
   if (!user) {
     return null;
+  }
+
+  // Bloquear cotizaciones si el servicio está asignado o completado
+  if (isServiceAssigned) {
+    return (
+      <div className="quote-form-card" style={{ 
+        backgroundColor: '#fff3cd', 
+        border: '1px solid #ffc107',
+        padding: '20px',
+        borderRadius: '8px',
+        marginTop: '20px'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <span style={{ fontSize: '24px' }}>⚠️</span>
+          <div>
+            <h3 style={{ margin: 0, color: '#856404', fontSize: '16px', fontWeight: '600' }}>
+              Cotizaciones cerradas
+            </h3>
+            <p style={{ margin: '4px 0 0 0', color: '#856404', fontSize: '14px' }}>
+              Este servicio ya ha sido asignado a un proveedor. No se pueden agregar nuevas cotizaciones.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const resetForm = () => {
@@ -37,6 +67,12 @@ const QuoteForm = ({ serviceId }) => {
     setLoading(true);
 
     try {
+      // Verificar que el servicio aún esté disponible para cotizar
+      const currentService = state.services.find((s) => s.id === serviceId);
+      if (currentService?.status === 'Asignado' || currentService?.status === 'Completado') {
+        throw new Error('Este servicio ya ha sido asignado. No se pueden agregar nuevas cotizaciones.');
+      }
+
       const priceValue = parseFloat(price);
 
       if (Number.isNaN(priceValue) || priceValue <= 0) {
@@ -64,10 +100,21 @@ const QuoteForm = ({ serviceId }) => {
         createdAt: new Date().toISOString()
       };
 
-      dispatch({ type: 'ADD_QUOTE', payload: { serviceId, quote: newQuote } });
-
-      setSuccess(true);
-      resetForm();
+      // Si estamos editando, actualizar. Si no, crear nueva.
+      if (editingQuote && onSave) {
+        const updatedQuote = {
+          ...editingQuote,
+          price: priceValue,
+          deadline,
+          duration: durationValue,
+          notes
+        };
+        onSave(updatedQuote);
+      } else {
+        dispatch({ type: 'ADD_QUOTE', payload: { serviceId, quote: newQuote } });
+        setSuccess(true);
+        resetForm();
+      }
     } catch (err) {
       setError(err.message || 'Error al enviar la cotización');
     } finally {
@@ -77,9 +124,30 @@ const QuoteForm = ({ serviceId }) => {
 
   return (
     <div className="quote-form-card">
-      <h3>Enviar Cotización</h3>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+        <h3>{editingQuote ? 'Editar Cotización' : 'Enviar Cotización'}</h3>
+        {editingQuote && onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            style={{
+              padding: '6px 12px',
+              backgroundColor: '#6c757d',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '13px'
+            }}
+          >
+            Cancelar
+          </button>
+        )}
+      </div>
       <p className="quote-form-subtitle">
-        Completa los datos para cotizar este servicio en MARKET DEL ESTE
+        {editingQuote 
+          ? 'Modifica los datos de tu cotización'
+          : 'Completa los datos para cotizar este servicio en MARKET DEL ESTE'}
       </p>
 
       {success && (
@@ -154,7 +222,9 @@ const QuoteForm = ({ serviceId }) => {
           className="btn-submit-quote"
           disabled={loading}
         >
-          {loading ? 'Enviando cotización...' : 'Enviar cotización'}
+          {loading 
+            ? (editingQuote ? 'Guardando cambios...' : 'Enviando cotización...')
+            : (editingQuote ? 'Guardar cambios' : 'Enviar cotización')}
         </button>
       </form>
     </div>

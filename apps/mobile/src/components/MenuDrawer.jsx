@@ -25,10 +25,6 @@ export default function MenuDrawer({ visible, onClose, onLogout, navigation }) {
     onClose();
     
     switch (option) {
-      case 'profile':
-        // TODO: Navegar a perfil cuando se implemente
-        console.log('Ver perfil');
-        break;
       case 'services':
         // Navegar al dashboard (ya estamos ahí, pero útil si estamos en otra pantalla)
         if (navigation) {
@@ -165,14 +161,6 @@ export default function MenuDrawer({ visible, onClose, onLogout, navigation }) {
                       )}
                     </>
                   )}
-
-                  <TouchableOpacity
-                    style={styles.menuItem}
-                    onPress={() => handleMenuOption('profile')}
-                  >
-                    <Text style={styles.menuIcon}>👤</Text>
-                    <Text style={styles.menuText}>Mi Perfil</Text>
-                  </TouchableOpacity>
                 </View>
 
                 {/* Separador */}

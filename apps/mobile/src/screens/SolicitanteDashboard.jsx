@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, TextInput, Alert } from 'react-native';
 import { useAppState } from '../../../../packages/core-logic/src/context/GlobalStateContext';
 import SummaryCard from '../components/SummaryCard';
 import FilterPills from '../components/FilterPills';
@@ -28,6 +28,11 @@ export default function SolicitanteDashboard({ navigation, onLogout }) {
   );
 
   const [serviceFilter, setServiceFilter] = useState('todos');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [locationFilter, setLocationFilter] = useState('');
+  const [dateFilter, setDateFilter] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
 
   // Calcular estadísticas
   const totalServices = myAllServices.length;
@@ -44,26 +49,56 @@ export default function SolicitanteDashboard({ navigation, onLogout }) {
     { key: 'finalizados', label: 'Finalizados' },
   ];
 
+  // Categorías disponibles (debe coincidir con web)
+  const categories = [
+    { value: '', label: 'Todas las categorías' },
+    { value: 'jardineria', label: 'Jardinería' },
+    { value: 'piscinas', label: 'Piscinas' },
+    { value: 'limpieza', label: 'Limpieza' },
+    { value: 'construccion', label: 'Construcción' },
+    { value: 'electricidad', label: 'Electricidad' },
+    { value: 'plomeria', label: 'Plomería' },
+    { value: 'pintura', label: 'Pintura' },
+    { value: 'otros', label: 'Otros' }
+  ];
+
   // Filtrar servicios según el filtro seleccionado
   const filteredServices = myAllServices.filter((service) => {
     const normalizedStatus = (service.status?.toLowerCase() || '').trim();
 
+    // Filtro por estado
+    let matchesStatus = true;
     switch (serviceFilter) {
       case 'solicitados':
-        return normalizedStatus === 'publicado';
+        matchesStatus = normalizedStatus === 'publicado';
+        break;
       case 'en-curso':
-        return (
-          normalizedStatus === 'en evaluación' || normalizedStatus === 'asignado'
-        );
+        matchesStatus = normalizedStatus === 'en evaluación' || normalizedStatus === 'asignado';
+        break;
       case 'finalizados':
-        return (
-          normalizedStatus.includes('finalizado') ||
-          normalizedStatus.includes('completado')
-        );
+        matchesStatus = normalizedStatus.includes('finalizado') || normalizedStatus.includes('completado');
+        break;
       case 'todos':
       default:
-        return true;
+        matchesStatus = true;
     }
+
+    // Filtro por categoría
+    const matchesCategory = !categoryFilter || service.category === categoryFilter;
+
+    // Filtro por ubicación
+    const matchesLocation = !locationFilter || 
+      (service.location && service.location.toLowerCase().includes(locationFilter.toLowerCase()));
+
+    // Filtro por fecha
+    const matchesDate = !dateFilter || service.date === dateFilter;
+
+    // Búsqueda por texto (título o descripción)
+    const matchesSearch = !searchQuery || 
+      (service.title && service.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (service.description && service.description.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    return matchesStatus && matchesCategory && matchesLocation && matchesDate && matchesSearch;
   });
 
   // Ordenar servicios (finalizados al final cuando se muestran todos)
@@ -127,15 +162,96 @@ export default function SolicitanteDashboard({ navigation, onLogout }) {
           <SummaryCard label="Finalizados" value={finalizedCount} />
         </View>
 
-        {/* Filtros */}
-        <View style={styles.filterSection}>
-          <Text style={styles.sectionTitle}>Servicios</Text>
-          <FilterPills
-            filters={filters}
-            activeFilter={serviceFilter}
-            onFilterChange={setServiceFilter}
-          />
-        </View>
+              {/* Búsqueda y Filtros */}
+              <View style={styles.filterSection}>
+                <View style={styles.searchHeader}>
+                  <Text style={styles.sectionTitle}>Servicios</Text>
+                  <TouchableOpacity
+                    style={styles.filterToggleButton}
+                    onPress={() => setShowFilters(!showFilters)}
+                  >
+                    <Text style={styles.filterToggleText}>
+                      {showFilters ? '✕ Ocultar' : '🔍 Filtros'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Búsqueda */}
+                <View style={styles.searchContainer}>
+                  <TextInput
+                    style={styles.searchInput}
+                    placeholder="Buscar por título o descripción..."
+                    placeholderTextColor="#999"
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                  />
+                </View>
+
+                {/* Filtros avanzados */}
+                {showFilters && (
+                  <View style={styles.advancedFiltersContainer}>
+                    <View style={styles.filterRow}>
+                      <Text style={styles.filterLabel}>Categoría:</Text>
+                      <TouchableOpacity
+                        style={styles.filterPicker}
+                        onPress={() => {
+                          Alert.alert(
+                            'Filtrar por Categoría',
+                            '',
+                            [
+                              ...categories.map((cat) => ({
+                                text: cat.label,
+                                onPress: () => setCategoryFilter(cat.value),
+                              })),
+                              { text: 'Limpiar', onPress: () => setCategoryFilter(''), style: 'destructive' },
+                              { text: 'Cancelar', style: 'cancel' },
+                            ],
+                            { cancelable: true }
+                          );
+                        }}
+                      >
+                        <Text style={styles.filterPickerText}>
+                          {categoryFilter
+                            ? categories.find((c) => c.value === categoryFilter)?.label || 'Todas'
+                            : 'Todas'}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    <View style={styles.filterRow}>
+                      <Text style={styles.filterLabel}>Ubicación:</Text>
+                      <TextInput
+                        style={styles.filterInput}
+                        placeholder="Filtrar por ubicación..."
+                        placeholderTextColor="#999"
+                        value={locationFilter}
+                        onChangeText={setLocationFilter}
+                      />
+                    </View>
+
+                    {(categoryFilter || locationFilter || dateFilter || searchQuery) && (
+                      <TouchableOpacity
+                        style={styles.clearFiltersButton}
+                        onPress={() => {
+                          setCategoryFilter('');
+                          setLocationFilter('');
+                          setDateFilter('');
+                          setSearchQuery('');
+                        }}
+                      >
+                        <Text style={styles.clearFiltersText}>Limpiar todos los filtros</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                )}
+
+                {/* Filtros por estado */}
+                <FilterPills
+                  filters={filters}
+                  activeFilter={serviceFilter}
+                  onFilterChange={setServiceFilter}
+                />
+              </View>
 
         {/* Lista de servicios */}
         <View style={styles.servicesSection}>
@@ -279,11 +395,92 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
+  searchHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   sectionTitle: {
     fontSize: 20,
     fontWeight: '700',
     color: '#333',
-    marginBottom: 16,
+    flex: 1,
+  },
+  filterToggleButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 6,
+  },
+  filterToggleText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#007AFF',
+  },
+  searchContainer: {
+    marginBottom: 12,
+  },
+  searchInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    backgroundColor: '#fff',
+    color: '#333',
+  },
+  advancedFiltersContainer: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+  },
+  filterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  filterLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    width: 90,
+    marginRight: 8,
+  },
+  filterPicker: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 6,
+    padding: 10,
+    backgroundColor: '#fff',
+  },
+  filterPickerText: {
+    fontSize: 14,
+    color: '#333',
+  },
+  filterInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 6,
+    padding: 10,
+    fontSize: 14,
+    backgroundColor: '#fff',
+    color: '#333',
+  },
+  clearFiltersButton: {
+    marginTop: 8,
+    padding: 10,
+    backgroundColor: '#ff3b30',
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  clearFiltersText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
   servicesSection: {
     padding: 20,

@@ -34,10 +34,23 @@ export default function ServiceFormScreen({ navigation }) {
   // Estados del formulario
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [category, setCategory] = useState('');
   const [location, setLocation] = useState('');
   const [date, setDate] = useState('');
   const [requiredSupplies, setRequiredSupplies] = useState([createEmptySupply()]);
   const [loading, setLoading] = useState(false);
+
+  // Categorías disponibles (debe coincidir con web)
+  const categories = [
+    { value: 'jardineria', label: 'Jardinería' },
+    { value: 'piscinas', label: 'Piscinas' },
+    { value: 'limpieza', label: 'Limpieza' },
+    { value: 'construccion', label: 'Construcción' },
+    { value: 'electricidad', label: 'Electricidad' },
+    { value: 'plomeria', label: 'Plomería' },
+    { value: 'pintura', label: 'Pintura' },
+    { value: 'otros', label: 'Otros' }
+  ];
 
   /**
    * Agrega un nuevo insumo vacío a la lista
@@ -91,6 +104,7 @@ export default function ServiceFormScreen({ navigation }) {
         id: Date.now().toString(), // ID único simple
         title: title.trim(),
         description: description.trim(),
+        category: category || 'otros', // Categoría del servicio
         location: location.trim(),
         date: date.trim(),
         status: 'Publicado', // Estado inicial (Regla de Negocio)
@@ -108,6 +122,7 @@ export default function ServiceFormScreen({ navigation }) {
       // Limpiar el formulario
       setTitle('');
       setDescription('');
+      setCategory('');
       setLocation('');
       setDate('');
       setRequiredSupplies([createEmptySupply()]);
@@ -189,6 +204,36 @@ export default function ServiceFormScreen({ navigation }) {
                 textAlignVertical="top"
                 editable={!loading}
               />
+            </View>
+
+            {/* Campo: Categoría */}
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Categoría *</Text>
+              <TouchableOpacity
+                style={styles.pickerButton}
+                onPress={() => {
+                  Alert.alert(
+                    'Seleccionar Categoría',
+                    '',
+                    [
+                      ...categories.map((cat) => ({
+                        text: cat.label,
+                        onPress: () => setCategory(cat.value),
+                      })),
+                      { text: 'Cancelar', style: 'cancel' },
+                    ],
+                    { cancelable: true }
+                  );
+                }}
+                disabled={loading}
+              >
+                <Text style={[styles.pickerText, !category && styles.pickerPlaceholder]}>
+                  {category
+                    ? categories.find((c) => c.value === category)?.label || 'Seleccionar categoría'
+                    : 'Seleccionar categoría'}
+                </Text>
+                <Text style={styles.pickerIcon}>▼</Text>
+              </TouchableOpacity>
             </View>
 
             {/* Campo: Ubicación */}
@@ -465,6 +510,30 @@ const styles = StyleSheet.create({
     color: '#999',
     marginTop: 8,
     fontStyle: 'italic',
+  },
+  pickerButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    backgroundColor: '#fff',
+    minHeight: 48,
+  },
+  pickerText: {
+    fontSize: 16,
+    color: '#333',
+    flex: 1,
+  },
+  pickerPlaceholder: {
+    color: '#999',
+  },
+  pickerIcon: {
+    fontSize: 12,
+    color: '#666',
+    marginLeft: 8,
   },
   submitButton: {
     backgroundColor: '#007AFF',

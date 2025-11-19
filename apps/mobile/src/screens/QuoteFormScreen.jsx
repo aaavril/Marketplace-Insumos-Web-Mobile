@@ -21,19 +21,20 @@ import DatePicker from '../components/DatePicker';
  */
 export default function QuoteFormScreen({ navigation, route }) {
   const { state, dispatch } = useAppState();
-  const { serviceId, service } = route.params || {};
+  const { serviceId, service, editingQuote } = route.params || {};
   
   const currentUser = state.currentUser;
 
-  // Estados del formulario
-  const [totalPrice, setTotalPrice] = useState('');
-  const [deadline, setDeadline] = useState('');
-  const [duration, setDuration] = useState('');
-  const [notes, setNotes] = useState('');
+  // Estados del formulario - prellenar si estamos editando
+  const [totalPrice, setTotalPrice] = useState(editingQuote?.price?.toString() || '');
+  const [deadline, setDeadline] = useState(editingQuote?.deadline || '');
+  const [duration, setDuration] = useState(editingQuote?.duration?.toString() || '');
+  const [notes, setNotes] = useState(editingQuote?.notes || '');
   const [loading, setLoading] = useState(false);
 
   // Obtener el servicio si no viene en route.params
   const currentService = service || state.services.find((s) => s.id === serviceId);
+  const isServiceAssigned = currentService?.status === 'Asignado' || currentService?.status === 'Completado';
 
   useEffect(() => {
     if (!currentService && serviceId) {
@@ -43,11 +44,64 @@ export default function QuoteFormScreen({ navigation, route }) {
     }
   }, [currentService, serviceId, navigation]);
 
+  // Actualizar campos cuando cambia editingQuote
+  useEffect(() => {
+    if (editingQuote) {
+      setTotalPrice(editingQuote.price?.toString() || '');
+      setDeadline(editingQuote.deadline || '');
+      setDuration(editingQuote.duration?.toString() || '');
+      setNotes(editingQuote.notes || '');
+    }
+  }, [editingQuote]);
+
+  // Bloquear formulario si el servicio está asignado o completado
+  if (isServiceAssigned) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.backButtonText}>← Volver</Text>
+          </TouchableOpacity>
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitle}>Cotización</Text>
+          </View>
+          <View style={styles.headerPlaceholder} />
+        </View>
+
+        <View style={styles.blockedContainer}>
+          <View style={styles.warningBox}>
+            <Text style={styles.warningIcon}>⚠️</Text>
+            <Text style={styles.warningTitle}>Cotizaciones cerradas</Text>
+            <Text style={styles.warningText}>
+              Este servicio ya ha sido asignado a un proveedor. No se pueden agregar nuevas cotizaciones.
+            </Text>
+            <TouchableOpacity
+              style={styles.backButtonBlocked}
+              onPress={() => navigation.goBack()}
+            >
+              <Text style={styles.backButtonBlockedText}>Volver al detalle</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   /**
    * Maneja el envío del formulario de cotización
    * Utiliza dispatch del Context para enviar ADD_QUOTE
    */
   const handleSubmit = async () => {
+    // Verificar que el servicio aún esté disponible para cotizar
+    const updatedService = state.services.find((s) => s.id === serviceId);
+    if (updatedService?.status === 'Asignado' || updatedService?.status === 'Completado') {
+      Alert.alert('Error', 'Este servicio ya ha sido asignado. No se pueden agregar nuevas cotizaciones.');
+      return;
+    }
+
     // Validación de campos requeridos
     if (!totalPrice.trim() || !deadline.trim() || !duration.trim()) {
       Alert.alert('Error', 'Por favor completa todos los campos requeridos');
@@ -75,39 +129,70 @@ export default function QuoteFormScreen({ navigation, route }) {
     setLoading(true);
 
     try {
-      // Crear la nueva cotización según el Modelo de Datos MVP
-      // Payload funcionalmente idéntica a la versión web
-      const newQuote = {
-        id: Date.now().toString(),
-        serviceId,
-        serviceProviderId: currentUser.id,
-        price: priceValue,
-        deadline: deadline.trim(),
-        duration: durationValue,
-        notes: notes.trim(),
-        createdAt: new Date().toISOString(),
-      };
+      // Si estamos editando, actualizar. Si no, crear nueva.
+      if (editingQuote) {
+        const updatedQuote = {
+          ...editingQuote,
+          price: priceValue,
+          deadline: deadline.trim(),
+          duration: durationValue,
+          notes: notes.trim()
+        };
+        
+        dispatch({
+          type: 'UPDATE_QUOTE',
+          payload: {
+            serviceId,
+            quoteId: editingQuote.id,
+            quote: updatedQuote
+          }
+        });
 
-      // Despachar la acción para agregar la cotización
-      dispatch({ type: 'ADD_QUOTE', payload: { serviceId, quote: newQuote } });
-
-      // Limpiar el formulario
-      setTotalPrice('');
-      setDeadline('');
-      setDuration('');
-      setNotes('');
-
-      // Mostrar mensaje de éxito y navegar atrás
-      Alert.alert('Éxito', 'Cotización enviada correctamente. El solicitante revisará tu propuesta.', [
-        {
-          text: 'OK',
-          onPress: () => {
-            if (navigation) {
-              navigation.goBack();
-            }
+        Alert.alert('Éxito', 'Cotización actualizada correctamente.', [
+          {
+            text: 'OK',
+            onPress: () => {
+              if (navigation) {
+                navigation.goBack();
+              }
+            },
           },
-        },
-      ]);
+        ]);
+      } else {
+        // Crear la nueva cotización según el Modelo de Datos MVP
+        // Payload funcionalmente idéntica a la versión web
+        const newQuote = {
+          id: Date.now().toString(),
+          serviceId,
+          serviceProviderId: currentUser.id,
+          price: priceValue,
+          deadline: deadline.trim(),
+          duration: durationValue,
+          notes: notes.trim(),
+          createdAt: new Date().toISOString(),
+        };
+
+        // Despachar la acción para agregar la cotización
+        dispatch({ type: 'ADD_QUOTE', payload: { serviceId, quote: newQuote } });
+
+        // Limpiar el formulario
+        setTotalPrice('');
+        setDeadline('');
+        setDuration('');
+        setNotes('');
+
+        // Mostrar mensaje de éxito y navegar atrás
+        Alert.alert('Éxito', 'Cotización enviada correctamente. El solicitante revisará tu propuesta.', [
+          {
+            text: 'OK',
+            onPress: () => {
+              if (navigation) {
+                navigation.goBack();
+              }
+            },
+          },
+        ]);
+      }
     } catch (err) {
       Alert.alert('Error', err.message || 'Error al enviar la cotización');
     } finally {
@@ -130,7 +215,9 @@ export default function QuoteFormScreen({ navigation, route }) {
           <Text style={styles.backButtonText}>← Volver</Text>
         </TouchableOpacity>
         <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Enviar Cotización</Text>
+          <Text style={styles.headerTitle}>
+            {editingQuote ? 'Editar Cotización' : 'Enviar Cotización'}
+          </Text>
         </View>
         <View style={styles.headerPlaceholder} />
       </View>
@@ -153,9 +240,13 @@ export default function QuoteFormScreen({ navigation, route }) {
               <Text style={styles.serviceDate}>📅 {currentService.date}</Text>
             </View>
 
-            <Text style={styles.title}>Completa tu Cotización</Text>
+            <Text style={styles.title}>
+              {editingQuote ? 'Edita tu Cotización' : 'Completa tu Cotización'}
+            </Text>
             <Text style={styles.subtitle}>
-              Envía tu propuesta para este servicio en MARKET DEL ESTE
+              {editingQuote
+                ? 'Modifica los datos de tu cotización'
+                : 'Envía tu propuesta para este servicio en MARKET DEL ESTE'}
             </Text>
 
             {/* Campo: Precio Total */}
@@ -219,7 +310,9 @@ export default function QuoteFormScreen({ navigation, route }) {
               disabled={loading}
             >
               <Text style={styles.submitButtonText}>
-                {loading ? 'Enviando...' : 'Enviar Cotización'}
+                {loading 
+                  ? (editingQuote ? 'Guardando...' : 'Enviando...')
+                  : (editingQuote ? 'Guardar Cambios' : 'Enviar Cotización')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -371,6 +464,51 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     letterSpacing: 0.5,
+  },
+  blockedContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: '#f5f5f5',
+  },
+  warningBox: {
+    backgroundColor: '#fff3cd',
+    borderWidth: 1,
+    borderColor: '#ffc107',
+    borderRadius: 12,
+    padding: 24,
+    alignItems: 'center',
+    maxWidth: 400,
+  },
+  warningIcon: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  warningTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#856404',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  warningText: {
+    fontSize: 16,
+    color: '#856404',
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 20,
+  },
+  backButtonBlocked: {
+    backgroundColor: '#6c757d',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+  },
+  backButtonBlockedText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

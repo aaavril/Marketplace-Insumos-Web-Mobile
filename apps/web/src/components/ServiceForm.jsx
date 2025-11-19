@@ -23,12 +23,25 @@ const ServiceForm = () => {
   // Estados del formulario
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [category, setCategory] = useState('');
   const [location, setLocation] = useState('');
   const [date, setDate] = useState('');
   const [requiredSupplies, setRequiredSupplies] = useState([createEmptySupply()]);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+
+  // Categorías disponibles
+  const categories = [
+    { value: 'jardineria', label: 'Jardinería' },
+    { value: 'piscinas', label: 'Piscinas' },
+    { value: 'limpieza', label: 'Limpieza' },
+    { value: 'construccion', label: 'Construcción' },
+    { value: 'electricidad', label: 'Electricidad' },
+    { value: 'plomeria', label: 'Plomería' },
+    { value: 'pintura', label: 'Pintura' },
+    { value: 'otros', label: 'Otros' }
+  ];
 
   /**
    * Agrega un nuevo insumo vacío a la lista
@@ -77,6 +90,7 @@ const ServiceForm = () => {
         id: Date.now().toString(), // ID único simple
         title,
         description,
+        category: category || 'otros', // Categoría del servicio
         location,
         date,
         status: 'Publicado', // Estado inicial (Regla de Negocio)
@@ -94,6 +108,7 @@ const ServiceForm = () => {
       // Limpiar el formulario
       setTitle('');
       setDescription('');
+      setCategory('');
       setLocation('');
       setDate('');
       setRequiredSupplies([createEmptySupply()]);
@@ -156,6 +171,24 @@ const ServiceForm = () => {
               required
               disabled={loading}
             />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="category">Categoría *</label>
+            <select
+              id="category"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              required
+              disabled={loading}
+            >
+              <option value="">Selecciona una categoría</option>
+              {categories.map((cat) => (
+                <option key={cat.value} value={cat.value}>
+                  {cat.label}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="form-group">

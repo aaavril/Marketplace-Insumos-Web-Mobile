@@ -16,6 +16,20 @@ export default function ServiceCard({ service, assignedProvider, onPress }) {
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.header}>
         <Text style={styles.title}>{service.title}</Text>
+        {service.category && (
+          <View style={styles.categoryBadge}>
+            <Text style={styles.categoryText}>
+              {service.category === 'jardineria' ? 'Jardinería' :
+               service.category === 'piscinas' ? 'Piscinas' :
+               service.category === 'limpieza' ? 'Limpieza' :
+               service.category === 'construccion' ? 'Construcción' :
+               service.category === 'electricidad' ? 'Electricidad' :
+               service.category === 'plomeria' ? 'Plomería' :
+               service.category === 'pintura' ? 'Pintura' :
+               service.category === 'otros' ? 'Otros' : service.category}
+            </Text>
+          </View>
+        )}
       </View>
       <Text style={styles.description} numberOfLines={3}>
         {service.description}
@@ -70,12 +84,29 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
   },
   title: {
     fontSize: 18,
     fontWeight: '700',
     color: '#333',
     lineHeight: 24,
+    flex: 1,
+    minWidth: '60%',
+  },
+  categoryBadge: {
+    backgroundColor: '#e3f2fd',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  categoryText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#1976d2',
   },
   description: {
     fontSize: 14,
