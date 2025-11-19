@@ -19,7 +19,8 @@
 11. [React Context](#react-context)
 12. [Props: Comunicación entre Componentes](#props-comunicación-entre-componentes)
 13. [Proceso de Autenticación](#proceso-de-autenticación)
-14. [Flujo de Datos en la Aplicación](#flujo-de-datos-en-la-aplicación)
+14. [Manejo de Rutas: Web y Mobile](#manejo-de-rutas-web-y-mobile)
+15. [Flujo de Datos en la Aplicación](#flujo-de-datos-en-la-aplicación)
 
 ---
 
@@ -77,6 +78,241 @@ Marketplace-Insumos-Web-Mobile/
 │   └── core-logic/   # Lógica compartida (Context, Services, Data)
 └── package.json      # Configuración del workspace raíz
 ```
+
+---
+
+## 🔍 Autocrítica Técnica: Arquitectura del Monorepo
+
+### Problema Identificado: Monorepo con Core-Logic Compartido
+
+**Aunque esta arquitectura funciona para desarrollo, presenta problemas técnicos importantes para producción y deploy:**
+
+### ¿Por qué NO es ideal esta arquitectura?
+
+#### 1. **Deploy Separado y Dependencias del Workspace**
+
+**Problema:**
+- **Web** se despliega en un servidor (Vercel, Netlify, etc.) → necesita `packages/core-logic`
+- **Mobile** se compila como app nativa (iOS/Android) → necesita `packages/core-logic`
+- Ambos tienen **deploys completamente independientes** y en **momentos diferentes**
+
+**¿Qué pasa en producción?**
+```bash
+# Para deployar Web:
+cd apps/web
+npm run build  # ❌ Falla porque busca packages/core-logic que no existe en el servidor
+
+# Para deployar Mobile:
+expo build  # ❌ Falla porque busca packages/core-logic que no existe en el build server
+```
+
+**Solución actual (problemática):**
+- Necesitas configurar el bundler (Vite/Metro) para resolver `packages/core-logic`
+- Esto funciona en desarrollo pero es frágil en producción
+- Requiere configuración compleja en cada plataforma
+
+#### 2. **Dependencias del Monorepo en Producción**
+
+**Problema Técnico:**
+- En desarrollo, `packages/core-logic` existe como carpeta local
+- En producción, cada app se despliega **independientemente**
+- El servidor de deploy **no tiene acceso** a `packages/core-logic`
+
+**Ejemplo Real:**
+```jsx
+// apps/web/src/components/Login.jsx
+import { useAuth } from '@core-logic/context/AuthContext';
+// ↑ En desarrollo: funciona (Vite resuelve el alias)
+// ↑ En producción: ❌ Falla (el servidor no tiene packages/core-logic)
+```
+
+**Configuración Necesaria (compleja):**
+```js
+// vite.config.js - Configuración para resolver core-logic
+resolve: {
+  alias: {
+    '@core-logic': path.resolve(__dirname, '../../packages/core-logic/src')
+  }
+}
+```
+
+#### 3. **Build y Bundle Independientes**
+
+**Problema:**
+- **Web** genera un bundle estático (HTML, CSS, JS) → se sirve desde un CDN
+- **Mobile** genera un bundle nativo (APK/IPA) → se distribuye en App Store/Play Store
+- **No comparten el mismo proceso de build**
+- **No comparten el mismo runtime**
+
+**Consecuencia:**
+- El código de `packages/core-logic` debe estar **incluido en cada bundle**
+- Cada app lleva una **copia del código compartido** en su bundle final
+- No hay verdadero "compartir" en producción, solo en desarrollo
+
+#### 4. **Lo que DEBERÍA estar copiado (mínimo necesario)**
+
+**En lugar de compartir todo `packages/core-logic`, solo debería compartirse:**
+
+✅ **Lo que SÍ debería estar copiado (mínimo):**
+- **Tipos/Interfaces** (si usas TypeScript)
+- **Constantes** (valores fijos)
+- **Utilidades puras** (funciones sin dependencias de React)
+- **Validaciones** (reglas de negocio)
+
+❌ **Lo que NO debería compartirse:**
+- **Context API** (cada app tiene su propio árbol de componentes)
+- **Hooks personalizados** (dependen del contexto de cada app)
+- **Componentes** (UI diferente en web vs mobile)
+
+**Ejemplo de lo que DEBERÍA estar copiado:**
+```javascript
+// ✅ CORRECTO: Utilidad pura (sin dependencias)
+// packages/shared-utils/src/validations.js
+export const validateEmail = (email) => {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+};
+
+// ✅ CORRECTO: Constantes
+// packages/shared-utils/src/constants.js
+export const USER_ROLES = {
+  SOLICITANTE: 'Solicitante',
+  PROVEEDOR_SERVICIO: 'Proveedor de Servicio',
+  PROVEEDOR_INSUMOS: 'Proveedor de Insumos'
+};
+```
+
+**Ejemplo de lo que NO debería compartirse:**
+```javascript
+// ❌ INCORRECTO: Context depende del árbol de componentes de cada app
+// packages/core-logic/src/context/GlobalStateContext.jsx
+export const GlobalStateProvider = ({ children }) => {
+  // Este Provider debe estar en cada app, no compartido
+};
+```
+
+### Arquitectura Alternativa Recomendada
+
+#### **Opción 1: Código Duplicado Mínimo (Recomendado para este caso)**
+
+**Estructura:**
+```
+Marketplace-Insumos-Web-Mobile/
+├── apps/
+│   ├── web/
+│   │   └── src/
+│   │       ├── context/     # Context específico de web
+│   │       ├── services/    # Servicios específicos de web
+│   │       └── utils/       # Utilidades compartidas (copiadas)
+│   └── mobile/
+│       └── src/
+│           ├── context/     # Context específico de mobile
+│           ├── services/   # Servicios específicos de mobile
+│           └── utils/      # Utilidades compartidas (copiadas)
+```
+
+**Ventajas:**
+- ✅ Cada app es **independiente** para deploy
+- ✅ No hay dependencias del workspace en producción
+- ✅ Build más simple y predecible
+- ✅ Solo se copia lo mínimo necesario (utilidades, constantes)
+
+**Desventajas:**
+- ❌ Hay duplicación de código (pero mínima y controlada)
+- ❌ Cambios en lógica compartida requieren actualizar ambas apps
+
+#### **Opción 2: Paquete NPM Privado (Para proyectos grandes)**
+
+**Estructura:**
+```
+packages/
+└── shared-logic/
+    ├── package.json
+    └── src/
+        └── utils/
+
+# Publicar como paquete NPM privado
+npm publish @mi-empresa/shared-logic
+
+# En cada app:
+npm install @mi-empresa/shared-logic
+```
+
+**Ventajas:**
+- ✅ Código compartido versionado
+- ✅ Cada app lo instala como dependencia normal
+- ✅ Deploy independiente funciona
+
+**Desventajas:**
+- ❌ Requiere infraestructura de NPM privado
+- ❌ Más complejo para proyectos pequeños
+
+#### **Opción 3: Monorepo con Build Tools Avanzados (Turborepo, Nx)**
+
+**Herramientas:**
+- **Turborepo**: Build system para monorepos
+- **Nx**: Herramienta completa para monorepos
+
+**Ventajas:**
+- ✅ Resuelve problemas de build y deploy
+- ✅ Caché inteligente
+- ✅ Builds paralelos
+
+**Desventajas:**
+- ❌ Curva de aprendizaje
+- ❌ Más configuración
+- ❌ Puede ser overkill para proyectos pequeños
+
+### ¿Por qué se eligió esta arquitectura (y por qué no es ideal)?
+
+**Razones de la elección inicial:**
+1. ✅ Desarrollo más rápido (código compartido)
+2. ✅ Menos duplicación durante desarrollo
+3. ✅ Fácil de entender para el equipo
+4. ✅ Funciona bien en desarrollo local
+
+**Problemas técnicos identificados:**
+1. ❌ **Deploy complejo**: Cada app necesita resolver `packages/core-logic`
+2. ❌ **Dependencias del workspace**: No funciona en servidores de deploy estándar
+3. ❌ **Build frágil**: Configuración compleja en Vite y Metro
+4. ❌ **No es verdadero "compartir"**: Cada bundle incluye una copia del código
+5. ❌ **Mantenimiento difícil**: Cambios en core-logic pueden romper builds
+
+### Lecciones Aprendidas
+
+**Para proyectos similares, se recomienda:**
+
+1. **Evaluar el deploy antes de elegir arquitectura**
+   - ¿Se despliegan juntos o separados?
+   - ¿Comparten el mismo runtime?
+
+2. **Minimizar código compartido**
+   - Solo compartir utilidades puras
+   - No compartir Context, Hooks, o Componentes
+
+3. **Considerar duplicación controlada**
+   - A veces es mejor duplicar código que complicar el build
+   - La duplicación mínima es aceptable si simplifica el deploy
+
+4. **Usar herramientas adecuadas**
+   - Para monorepos complejos: Turborepo o Nx
+   - Para proyectos simples: código duplicado mínimo
+
+### Conclusión de la Autocrítica
+
+**Esta arquitectura funciona para:**
+- ✅ Desarrollo y prototipado rápido
+- ✅ Proyectos académicos/MVP
+- ✅ Aprendizaje de conceptos
+
+**Esta arquitectura NO es ideal para:**
+- ❌ Producción con deploys independientes
+- ❌ Proyectos que escalan
+- ❌ Equipos grandes con CI/CD complejo
+
+**Recomendación para futuros proyectos:**
+- Usar **código duplicado mínimo** (solo utilidades y constantes)
+- O usar **paquetes NPM** si realmente se necesita compartir código
+- O usar **Turborepo/Nx** si el monorepo es necesario
 
 ---
 
@@ -1290,143 +1526,515 @@ export const AuthProvider = ({ children }) => {
 
 ---
 
-## 🔌 React Context
+## 🔌 React Context (Detallado)
 
 ### ¿Qué es React Context?
 
-Context es una forma de compartir datos entre componentes sin tener que pasar props manualmente en cada nivel (prop drilling).
+**React Context** es una API de React que permite compartir datos entre componentes sin tener que pasar props manualmente en cada nivel (prop drilling).
 
-### Problema que Resuelve: Prop Drilling
+**Conceptos Clave:**
+- **Context**: Un objeto que almacena datos compartidos
+- **Provider**: Un componente que "provee" (suministra) los datos a sus hijos
+- **Consumer**: Un componente o hook que "consume" (lee) los datos del Context
+- **Children**: Los componentes hijos que pueden acceder al Context
 
-**Sin Context (Prop Drilling):**
+### ¿Cómo Funciona React Context?
 
-```jsx
-// App.jsx
-function App() {
-  const user = { name: 'Juan' };
-  return <Header user={user} />;
-}
-
-// Header.jsx
-function Header({ user }) {
-  return <Navbar user={user} />;
-}
-
-// Navbar.jsx
-function Navbar({ user }) {
-  return <UserMenu user={user} />;
-}
-
-// UserMenu.jsx
-function UserMenu({ user }) {
-  return <div>{user.name}</div>;
-}
+**Flujo Básico:**
+```
+1. Crear el Context (createContext)
+   ↓
+2. Crear el Provider (componente que envuelve hijos)
+   ↓
+3. El Provider tiene un value (los datos a compartir)
+   ↓
+4. Cualquier componente hijo puede acceder al value usando useContext
 ```
 
-**Con Context:**
+### Estructura de un Context
 
+**1. Crear el Context:**
 ```jsx
-// 1. Crear el Context
-const UserContext = createContext();
+import { createContext } from 'react';
 
-// 2. Crear el Provider
-function App() {
-  const user = { name: 'Juan' };
-  return (
-    <UserContext.Provider value={user}>
-      <Header />
-    </UserContext.Provider>
-  );
-}
-
-// 3. Usar el Context en cualquier componente hijo
-function UserMenu() {
-  const user = useContext(UserContext);
-  return <div>{user.name}</div>;
-}
+// createContext crea un objeto Context
+// El valor por defecto se usa si no hay Provider
+export const MiContext = createContext(valorPorDefecto);
 ```
 
-### Context en Este Proyecto
-
-El proyecto usa **dos contextos principales**:
-
-#### 1. **GlobalStateContext** - Estado Global de la Aplicación
-
-**Ubicación:** `packages/core-logic/src/context/GlobalStateContext.jsx`
-
+**2. Crear el Provider:**
 ```jsx
-// 1. Crear el Context
-export const StateContext = createContext();
-
-// 2. Crear el Provider
-export const GlobalStateProvider = ({ children }) => {
-  const [state, dispatch] = useReducer(AppReducer, initialState);
-
+// El Provider es un COMPONENTE que:
+// - Recibe children como prop
+// - Tiene un value (los datos a compartir)
+// - Envuelve los componentes hijos
+export const MiProvider = ({ children }) => {
+  // Puede usar useState, useReducer, etc.
+  const [datos, setDatos] = useState(/* ... */);
+  
+  // El value es lo que se comparte
+  const value = {
+    datos,
+    setDatos,
+    // ... más datos o funciones
+  };
+  
+  // Provider envuelve children
   return (
-    <StateContext.Provider value={{ state, dispatch }}>
+    <MiContext.Provider value={value}>
       {children}
+    </MiContext.Provider>
+  );
+};
+```
+
+**3. Consumir el Context:**
+```jsx
+import { useContext } from 'react';
+import { MiContext } from './MiContext';
+
+const MiComponente = () => {
+  // useContext lee el value del Provider más cercano
+  const { datos, setDatos } = useContext(MiContext);
+  
+  return <div>{datos}</div>;
+};
+```
+
+### ¿Dónde se Coloca el Provider?
+
+**El Provider puede ser padre de:**
+- ✅ **App** (toda la aplicación)
+- ✅ **Cualquier componente** (solo esa parte de la app)
+- ✅ **Otro Provider** (providers anidados)
+
+**Ejemplo 1: Provider como padre de App (Recomendado para estado global)**
+```jsx
+// main.jsx
+import { GlobalStateProvider } from '@core-logic/context/GlobalStateContext';
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <GlobalStateProvider>  {/* ← Provider envuelve App */}
+    <App />
+  </GlobalStateProvider>
+);
+```
+
+**Ejemplo 2: Provider como padre de un componente específico**
+```jsx
+// DashboardPage.jsx
+const DashboardPage = () => {
+  return (
+    <MiProvider>  {/* ← Provider solo para esta sección */}
+      <Header />
+      <Content />
+      <Footer />
+    </MiProvider>
+  );
+};
+```
+
+**Ejemplo 3: Providers anidados (uno dentro de otro)**
+```jsx
+// main.jsx
+<GlobalStateProvider>      {/* ← Provider externo */}
+  <AuthProvider>            {/* ← Provider interno (usa GlobalStateProvider) */}
+    <App />
+  </AuthProvider>
+</GlobalStateProvider>
+```
+
+### Provider: Componente que Envuelve Children
+
+**¿Qué es el Provider?**
+- El Provider es un **componente React normal**
+- Recibe `children` como prop (los componentes hijos)
+- Tiene un `value` que contiene los datos a compartir
+- Envuelve los componentes hijos con `<Context.Provider>`
+
+**Estructura del Provider:**
+```jsx
+export const MiProvider = ({ children }) => {
+  // 1. Puede usar hooks (useState, useReducer, useEffect, etc.)
+  const [estado, setEstado] = useState(/* ... */);
+  
+  // 2. Puede tener lógica de negocio
+  const funcion = () => {
+    // ...
+  };
+  
+  // 3. Crea el value (objeto con datos y funciones)
+  const value = {
+    estado,
+    setEstado,
+    funcion,
+    // ...
+  };
+  
+  // 4. Retorna el Provider con children
+  return (
+    <MiContext.Provider value={value}>
+      {children}  {/* ← Renderiza los componentes hijos */}
+    </MiContext.Provider>
+  );
+};
+```
+
+**Características del Provider:**
+- ✅ Es un componente funcional normal
+- ✅ Puede usar hooks (useState, useReducer, useEffect, etc.)
+- ✅ Puede tener props (pero `children` es la más común)
+- ✅ Puede exportar funciones, constantes, etc.
+- ✅ El `value` puede ser cualquier tipo (objeto, array, primitivo, función)
+
+### Children: Los Componentes Hijos
+
+**¿Qué es `children`?**
+- `children` es una **prop especial** de React
+- Contiene los componentes/elementos que se pasan entre las etiquetas del componente
+- Es lo que el Provider "envuelve"
+
+**Ejemplo:**
+```jsx
+// Cuando usas el Provider:
+<GlobalStateProvider>
+  <App />        {/* ← Esto es children */}
+</GlobalStateProvider>
+
+// Dentro del Provider:
+export const GlobalStateProvider = ({ children }) => {
+  // children = <App />
+  return (
+    <StateContext.Provider value={value}>
+      {children}  {/* ← Renderiza <App /> */}
+    </StateContext.Provider>
+  );
+};
+```
+
+**Children puede ser:**
+- Un componente: `<Provider><App /></Provider>`
+- Múltiples componentes: `<Provider><Header /><Content /></Provider>`
+- Texto: `<Provider>Texto</Provider>`
+- Nada: `<Provider></Provider>` (children = undefined)
+
+### Cómo Funciona el Render con Context
+
+**Flujo de Renderizado:**
+```
+1. React renderiza el Provider
+   ↓
+2. Provider ejecuta su código (hooks, lógica)
+   ↓
+3. Provider crea el value
+   ↓
+4. Provider renderiza children dentro de <Context.Provider>
+   ↓
+5. Los componentes hijos se renderizan
+   ↓
+6. Si un hijo usa useContext, React busca el Provider más cercano
+   ↓
+7. React lee el value del Provider y lo pasa al componente
+```
+
+**Ejemplo Detallado:**
+```jsx
+// 1. React renderiza GlobalStateProvider
+<GlobalStateProvider>
+  <App />
+</GlobalStateProvider>
+
+// 2. Dentro de GlobalStateProvider:
+const GlobalStateProvider = ({ children }) => {
+  // 3. Se ejecuta useReducer (crea state y dispatch)
+  const [state, dispatch] = useReducer(AppReducer, initialState);
+  
+  // 4. Se crea el value
+  const value = { state, dispatch };
+  
+  // 5. Se renderiza children (<App />) dentro del Provider
+  return (
+    <StateContext.Provider value={value}>
+      {children}  {/* ← Renderiza <App /> */}
     </StateContext.Provider>
   );
 };
 
-// 3. Custom Hook para usar el Context
-export const useAppState = () => {
-  const context = useContext(StateContext);
-  if (!context) {
-    throw new Error('useAppState debe usarse dentro de GlobalStateProvider');
-  }
-  return context;
-};
-```
-
-**¿Qué contiene el estado global?**
-- `services`: Lista de servicios publicados
-- `users`: Lista de usuarios
-- `currentUser`: Usuario autenticado actual
-- `quotes`: Cotizaciones
-- `supplyOffers`: Ofertas de insumos
-
-**Uso en componentes:**
-
-```jsx
-import { useAppState } from '@core-logic/context/GlobalStateContext';
-
-const MiComponente = () => {
-  const { state, dispatch } = useAppState();
-  
-  // Acceder al estado
-  const servicios = state.services;
-  const usuarioActual = state.currentUser;
-  
-  // Modificar el estado
-  dispatch({ type: 'ADD_SERVICE', payload: nuevoServicio });
+// 6. App se renderiza
+const App = () => {
+  // 7. Si App usa useContext, React busca el Provider
+  const { state } = useContext(StateContext);
   
   return <div>...</div>;
 };
 ```
 
-#### 2. **AuthContext** - Autenticación
+### Context con useState, useReducer, y otros Hooks
 
-**Ubicación:** `packages/core-logic/src/context/AuthContext.jsx`
+**El Provider puede usar cualquier hook:**
 
 ```jsx
+export const MiProvider = ({ children }) => {
+  // ✅ Puede usar useState
+  const [count, setCount] = useState(0);
+  
+  // ✅ Puede usar useReducer
+  const [state, dispatch] = useReducer(reducer, initialState);
+  
+  // ✅ Puede usar useEffect
+  useEffect(() => {
+    // ...
+  }, []);
+  
+  // ✅ Puede usar useMemo
+  const valorMemoizado = useMemo(() => {
+    // ...
+  }, [deps]);
+  
+  // ✅ Puede tener funciones
+  const handleClick = () => {
+    setCount(count + 1);
+  };
+  
+  // ✅ Puede tener lógica compleja
+  const calcularTotal = () => {
+    return state.items.reduce((sum, item) => sum + item.price, 0);
+  };
+  
+  // ✅ Todo esto se puede compartir en el value
+  const value = {
+    count,
+    setCount,
+    state,
+    dispatch,
+    handleClick,
+    calcularTotal,
+    // ...
+  };
+  
+  return (
+    <MiContext.Provider value={value}>
+      {children}
+    </MiContext.Provider>
+  );
+};
+```
+
+### Exports: Cómo se Exporta un Context
+
+**Patrón de Exportación:**
+```jsx
+// 1. Crear el Context
+export const MiContext = createContext();
+
+// 2. Crear el Provider
+export const MiProvider = ({ children }) => {
+  // ...
+  return (
+    <MiContext.Provider value={value}>
+      {children}
+    </MiContext.Provider>
+  );
+};
+
+// 3. Crear el Custom Hook (opcional pero recomendado)
+export const useMiContext = () => {
+  const context = useContext(MiContext);
+  if (!context) {
+    throw new Error('useMiContext debe usarse dentro de MiProvider');
+  }
+  return context;
+};
+```
+
+**¿Por qué exportar el Context?**
+- A veces necesitas acceder al Context directamente (raro)
+- Para testing
+- Para casos avanzados
+
+**¿Por qué crear un Custom Hook?**
+- ✅ Mejor experiencia de uso
+- ✅ Validación automática (error si se usa fuera del Provider)
+- ✅ Más fácil de usar: `useMiContext()` vs `useContext(MiContext)`
+
+### Context vs Props
+
+**Props:**
+- Se pasan manualmente de padre → hijo
+- Solo llegan a componentes directos
+- Prop drilling si hay muchos niveles
+
+**Context:**
+- Se comparte automáticamente a todos los hijos
+- No importa cuántos niveles haya
+- No hay prop drilling
+
+**Comparación:**
+```jsx
+// CON PROPS (prop drilling):
+<App>
+  <Header user={user}>           {/* Pasa user */}
+    <Navbar user={user}>          {/* Pasa user */}
+      <UserMenu user={user} />    {/* Usa user */}
+    </Navbar>
+  </Header>
+</App>
+
+// CON CONTEXT (sin prop drilling):
+<App>
+  <UserProvider value={user}>     {/* Provider envuelve */}
+    <Header>                      {/* No pasa props */}
+      <Navbar>                    {/* No pasa props */}
+        <UserMenu />              {/* Usa useContext */}
+      </Navbar>
+    </Header>
+  </UserProvider>
+</App>
+```
+
+### Cómo Consumimos el Context
+
+**Método 1: useContext Hook (Recomendado)**
+```jsx
+import { useContext } from 'react';
+import { StateContext } from './GlobalStateContext';
+
+const MiComponente = () => {
+  // useContext lee el value del Provider más cercano
+  const { state, dispatch } = useContext(StateContext);
+  
+  return <div>{state.currentUser?.name}</div>;
+};
+```
+
+**Método 2: Custom Hook (Más Recomendado)**
+```jsx
+import { useAppState } from '@core-logic/context/GlobalStateContext';
+
+const MiComponente = () => {
+  // Custom hook con validación
+  const { state, dispatch } = useAppState();
+  
+  return <div>{state.currentUser?.name}</div>;
+};
+```
+
+**Método 3: Consumer Component (Antiguo, no recomendado)**
+```jsx
+// ⚠️ Método antiguo, no se usa en este proyecto
+<StateContext.Consumer>
+  {({ state, dispatch }) => (
+    <div>{state.currentUser?.name}</div>
+  )}
+</StateContext.Consumer>
+```
+
+### Ejemplo Real del Proyecto: GlobalStateContext
+
+**Archivo:** `packages/core-logic/src/context/GlobalStateContext.jsx`
+
+```jsx
+// 1. Importar funciones de React
+import { createContext, useContext, useReducer } from 'react';
+
+// 2. Crear el Context
+export const StateContext = createContext();
+
+// 3. Crear el Provider (componente funcional)
+export const GlobalStateProvider = ({ children }) => {
+  // 4. Usar useReducer para manejar el estado
+  const [state, dispatch] = useReducer(AppReducer, initialState);
+  
+  // 5. Crear el value (objeto con state y dispatch)
+  const value = { state, dispatch };
+  
+  // 6. Retornar el Provider con children
+  return (
+    <StateContext.Provider value={value}>
+      {children}  {/* ← Renderiza los componentes hijos */}
+    </StateContext.Provider>
+  );
+};
+
+// 7. Crear Custom Hook para consumir el Context
+export const useAppState = () => {
+  // 8. useContext lee el value del Provider
+  const context = useContext(StateContext);
+  
+  // 9. Validar que se use dentro del Provider
+  if (!context) {
+    throw new Error('useAppState debe usarse dentro de GlobalStateProvider');
+  }
+  
+  // 10. Retornar el context (que contiene { state, dispatch })
+  return context;
+};
+```
+
+**Uso en un componente:**
+```jsx
+import { useAppState } from '@core-logic/context/GlobalStateContext';
+
+const DashboardPage = () => {
+  // useAppState() retorna { state, dispatch }
+  const { state, dispatch } = useAppState();
+  
+  // Acceder al estado
+  const currentUser = state.currentUser;
+  const services = state.services;
+  
+  // Modificar el estado
+  const handleAddService = () => {
+    dispatch({ type: 'ADD_SERVICE', payload: newService });
+  };
+  
+  return <div>...</div>;
+};
+```
+
+### Ejemplo Real del Proyecto: AuthContext
+
+**Archivo:** `packages/core-logic/src/context/AuthContext.jsx`
+
+```jsx
+// 1. Crear el Context
 export const AuthContext = createContext(undefined);
 
+// 2. Crear el Provider
 export const AuthProvider = ({ children }) => {
-  const { state, dispatch } = useAppState(); // Usa GlobalStateContext internamente
+  // 3. Usar otro Context (GlobalStateContext)
+  const { state, dispatch } = useAppState();
   
+  // 4. Usar useState para estado local del Provider
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState(null);
+  
+  // 5. Usar useEffect para cargar usuario al iniciar
+  useEffect(() => {
+    const savedUser = localStorage.getItem('currentUser');
+    if (savedUser) {
+      const user = JSON.parse(savedUser);
+      dispatch({ type: 'SET_CURRENT_USER', payload: user });
+    }
+  }, [dispatch]);
+  
+  // 6. Crear funciones que usan el estado
   const login = async (email, password) => {
-    // Lógica de login
+    setAuthLoading(true);
     const userData = await authLogin(email, password);
+    localStorage.setItem('currentUser', JSON.stringify(userData));
     dispatch({ type: 'SET_CURRENT_USER', payload: userData });
+    setAuthLoading(false);
     return userData;
   };
-
+  
   const logout = async () => {
     await authLogout();
+    localStorage.removeItem('currentUser');
     dispatch({ type: 'LOGOUT' });
   };
-
+  
+  // 7. Crear el value con todo lo que se quiere compartir
   const value = {
     user: state.currentUser,
     loading: authLoading,
@@ -1436,46 +2044,186 @@ export const AuthProvider = ({ children }) => {
     logout,
     getUserRole: () => state.currentUser?.role
   };
-
+  
+  // 8. Retornar el Provider con children
   return (
     <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
 };
+
+// 9. Custom Hook para consumir
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth debe ser usado dentro de un AuthProvider');
+  }
+  return context;
+}
 ```
 
-**Uso en componentes:**
+### Jerarquía de Providers en el Proyecto
 
+**En Web (`apps/web/src/main.jsx`):**
 ```jsx
-import { useAuth } from '@core-logic/context/AuthContext';
-
-const LoginPage = () => {
-  const { login, isAuthenticated, user } = useAuth();
-  
-  const handleLogin = async () => {
-    await login(email, password);
-  };
-  
-  return <div>...</div>;
-};
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <GlobalStateProvider>    {/* ← Provider externo (padre) */}
+      <AuthProvider>          {/* ← Provider interno (hijo de GlobalStateProvider) */}
+        <App />                {/* ← App (hijo de AuthProvider) */}
+      </AuthProvider>
+    </GlobalStateProvider>
+  </React.StrictMode>
+);
 ```
 
-### Jerarquía de Providers
-
-**`apps/web/src/main.jsx`:**
-
+**En Mobile (`apps/mobile/App.jsx`):**
 ```jsx
-<GlobalStateProvider>    {/* Estado global */}
-  <AuthProvider>          {/* Autenticación (usa GlobalStateProvider) */}
-    <App />                {/* Aplicación */}
-  </AuthProvider>
-</GlobalStateProvider>
+export default function App() {
+  return (
+    <ErrorBoundary>
+      <GlobalStateProvider>    {/* ← Provider externo */}
+        <StatusBar style="auto" />
+        <AppNavigator />        {/* ← No usa AuthProvider directamente */}
+      </GlobalStateProvider>
+    </ErrorBoundary>
+  );
+}
 ```
 
 **¿Por qué este orden?**
 - `AuthProvider` necesita `GlobalStateProvider` porque usa `useAppState()` internamente
 - `App` puede usar ambos contextos
+- Los Providers se pueden anidar (uno dentro de otro)
+
+### Árbol de Componentes con Context
+
+```
+main.jsx
+└── ReactDOM.createRoot()
+    └── React.StrictMode
+        └── GlobalStateProvider (Provider)
+            └── AuthProvider (Provider, hijo de GlobalStateProvider)
+                └── App (Componente, hijo de AuthProvider)
+                    └── AppRouter
+                        └── Routes
+                            └── DashboardPage (puede usar useAppState() y useAuth())
+                                └── RoleDashboard (puede usar useAppState() y useAuth())
+                                    └── SolicitanteDashboard (puede usar useAppState() y useAuth())
+```
+
+**Todos los componentes dentro de los Providers pueden acceder a los Contexts:**
+- `DashboardPage` puede usar `useAppState()` y `useAuth()`
+- `RoleDashboard` puede usar `useAppState()` y `useAuth()`
+- `SolicitanteDashboard` puede usar `useAppState()` y `useAuth()`
+- Cualquier componente hijo puede usar los Contexts
+
+### ¿Puede el Provider ser Padre de Otro Componente (no solo App)?
+
+**Sí, el Provider puede envolver cualquier componente:**
+
+```jsx
+// Ejemplo 1: Provider solo para una sección
+const DashboardPage = () => {
+  return (
+    <div>
+      <Header />
+      <MiProvider>        {/* ← Provider solo para esta sección */}
+        <Content />
+        <Sidebar />
+      </MiProvider>
+      <Footer />
+    </div>
+  );
+};
+
+// Ejemplo 2: Provider dentro de otro componente
+const SolicitanteDashboard = () => {
+  return (
+    <MiProvider>          {/* ← Provider local */}
+      <ServiceList />
+      <CreateServiceButton />
+    </MiProvider>
+  );
+};
+
+// Ejemplo 3: Múltiples Providers
+const App = () => {
+  return (
+    <Provider1>
+      <Provider2>
+        <Provider3>
+          <Content />
+        </Provider3>
+      </Provider2>
+    </Provider1>
+  );
+};
+```
+
+**En este proyecto:**
+- `GlobalStateProvider` y `AuthProvider` envuelven toda la app (en `main.jsx`)
+- Esto permite que **cualquier componente** acceda al estado global
+- No necesitas pasar props manualmente
+
+### Resumen: Cómo Funciona Context
+
+**1. Creación:**
+```jsx
+const MiContext = createContext();
+```
+
+**2. Provider (Componente):**
+```jsx
+const MiProvider = ({ children }) => {
+  // Lógica, hooks, estado
+  const value = { /* datos */ };
+  return (
+    <MiContext.Provider value={value}>
+      {children}
+    </MiContext.Provider>
+  );
+};
+```
+
+**3. Consumo:**
+```jsx
+const MiComponente = () => {
+  const datos = useContext(MiContext);
+  // o
+  const datos = useMiContext(); // Custom hook
+};
+```
+
+**4. Uso:**
+```jsx
+<MiProvider>
+  <MiComponente />  {/* Puede usar useContext */}
+</MiProvider>
+```
+
+### Ventajas y Desventajas
+
+**Ventajas:**
+- ✅ Evita prop drilling
+- ✅ Comparte datos globalmente
+- ✅ Fácil de usar con hooks
+- ✅ Puede usar cualquier hook dentro del Provider
+
+**Desventajas:**
+- ❌ Puede causar re-renders innecesarios si no se optimiza
+- ❌ Más difícil de debuggear que props
+- ❌ No reemplaza props para datos locales
+
+**Cuándo usar Context:**
+- ✅ Estado global (usuario, tema, idioma)
+- ✅ Datos compartidos entre muchos componentes
+- ✅ Cuando hay prop drilling
+
+**Cuándo NO usar Context:**
+- ❌ Datos que solo se usan en componentes cercanos (usa props)
+- ❌ Datos que cambian frecuentemente (puede causar muchos re-renders)
 
 ---
 
@@ -1860,6 +2608,716 @@ const ProtectedRoute = ({ children }) => {
 1. `ProtectedRoute` verifica si el usuario está autenticado
 2. Si no está autenticado, redirige a `/login`
 3. Si está autenticado, renderiza el componente hijo
+
+---
+
+## 🧭 Manejo de Rutas: Web y Mobile
+
+### ¿Qué es el Routing (Enrutamiento)?
+
+El **routing** es el proceso de determinar qué componente o pantalla mostrar según la URL (en web) o la acción del usuario (en mobile). Es como un "mapa" que conecta diferentes "direcciones" con diferentes "páginas".
+
+**En Web:** Las rutas se basan en URLs (ej: `/dashboard`, `/services/123`)
+**En Mobile:** Las rutas se basan en una pila de pantallas (Stack Navigator)
+
+### ⚠️ Diferencia Fundamental: Stack vs URLs
+
+**IMPORTANTE:** La diferencia más importante entre web y mobile es cómo manejan la navegación:
+
+#### **Mobile: Stack Navigator (Pila de Pantallas)**
+- ✅ **SÍ usa un Stack** (pila de cartas)
+- Las pantallas se apilan una sobre otra
+- `navigation.navigate()` agrega una pantalla al stack
+- `navigation.goBack()` quita la pantalla superior del stack
+- No hay URLs, solo nombres de pantallas
+
+#### **Web: BrowserRouter (URLs)**
+- ❌ **NO usa un Stack**
+- Basado en URLs del navegador (`/dashboard`, `/services/123`)
+- `navigate('/dashboard')` cambia la URL
+- El botón "atrás" del navegador usa el historial del navegador
+- No hay stack de componentes, solo mapeo URL → componente
+
+**Resumen:**
+- **Mobile = Stack Navigator** (pila de pantallas)
+- **Web = BrowserRouter** (rutas basadas en URLs)
+
+### Diferencias Clave: Web vs Mobile
+
+| Aspecto | Web (React Router) | Mobile (React Navigation) |
+|---------|-------------------|---------------------------|
+| **Librería** | React Router DOM v7 | React Navigation v7 |
+| **Basado en** | URLs del navegador | Stack de pantallas |
+| **Navegación** | `useNavigate()`, `<Link>`, `<Navigate>` | `navigation.navigate()`, `navigation.replace()` |
+| **Historial** | History API del navegador | Stack interno de React Navigation |
+| **Rutas protegidas** | `<ProtectedRoute>` wrapper | Lógica en `initialRouteName` |
+| **Parámetros** | `useParams()` hook | `route.params` prop |
+| **Volver atrás** | Botón del navegador | `navigation.goBack()` |
+
+---
+
+## 🌐 Manejo de Rutas en Web (React Router)
+
+### ¿Qué es React Router?
+
+**React Router** es la librería estándar para manejar navegación en aplicaciones React web. Permite crear aplicaciones de "una sola página" (SPA - Single Page Application) donde la URL cambia sin recargar la página completa.
+
+### Componentes Principales de React Router
+
+#### 1. **BrowserRouter**
+Proporciona el contexto de navegación usando la History API del navegador.
+
+```jsx
+// apps/web/src/router/AppRouter.jsx
+import { BrowserRouter } from 'react-router-dom';
+
+<BrowserRouter>
+  {/* Todas las rutas van aquí */}
+</BrowserRouter>
+```
+
+**¿Qué hace?**
+- Permite usar URLs limpias sin `#` (ej: `/dashboard` en lugar de `/#/dashboard`)
+- Gestiona el historial del navegador
+- Proporciona el contexto de navegación a todos los componentes hijos
+
+#### 2. **Routes y Route**
+Define las rutas de la aplicación.
+
+```jsx
+// apps/web/src/router/AppRouter.jsx
+import { Routes, Route } from 'react-router-dom';
+
+<Routes>
+  {/* Ruta pública - siempre accesible */}
+  <Route path="/" element={<LandingPage />} />
+  
+  {/* Ruta pública - solo si NO estás autenticado */}
+  <Route 
+    path="/login" 
+    element={
+      <PublicRoute>
+        <LoginPage />
+      </PublicRoute>
+    } 
+  />
+  
+  {/* Ruta protegida - solo si estás autenticado */}
+  <Route 
+    path="/dashboard" 
+    element={
+      <ProtectedRoute>
+        <DashboardPage />
+      </ProtectedRoute>
+    } 
+  />
+  
+  {/* Ruta dinámica - :id es un parámetro */}
+  <Route 
+    path="/services/:id" 
+    element={
+      <ProtectedRoute>
+        <ServiceDetailPage />
+      </ProtectedRoute>
+    } 
+  />
+  
+  {/* Ruta 404 - catch-all (debe ir al final) */}
+  <Route path="*" element={<NotFoundPage />} />
+</Routes>
+```
+
+**Estructura de una Ruta:**
+- `path`: La URL que activa esta ruta (ej: `/dashboard`, `/services/:id`)
+- `element`: El componente que se renderiza cuando la URL coincide
+- `:id`: Parámetro dinámico (ej: `/services/123` → `id = "123"`)
+
+### Rutas Públicas vs Protegidas
+
+#### **PublicRoute** - Solo para usuarios NO autenticados
+
+```jsx
+// apps/web/src/router/PublicRoute.jsx
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '@core-logic/context/AuthContext';
+
+const PublicRoute = ({ children }) => {
+  const { isAuthenticated } = useAuth();
+  
+  // Si YA estás autenticado, redirige a dashboard
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  
+  // Si NO estás autenticado, muestra la página
+  return children;
+};
+```
+
+**Uso:**
+```jsx
+<Route 
+  path="/login" 
+  element={
+    <PublicRoute>
+      <LoginPage />
+    </PublicRoute>
+  } 
+/>
+```
+
+**¿Por qué es útil?**
+- Evita que usuarios ya logueados vean la pantalla de login
+- Mejora la experiencia de usuario
+
+#### **ProtectedRoute** - Solo para usuarios autenticados
+
+```jsx
+// apps/web/src/router/ProtectedRoute.jsx
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '@core-logic/context/AuthContext';
+
+const ProtectedRoute = ({ children }) => {
+  const { isAuthenticated } = useAuth();
+  
+  // Si NO estás autenticado, redirige a login
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  // Si estás autenticado, muestra la página
+  return children;
+};
+```
+
+**Uso:**
+```jsx
+<Route 
+  path="/dashboard" 
+  element={
+    <ProtectedRoute>
+      <DashboardPage />
+    </ProtectedRoute>
+  } 
+/>
+```
+
+**¿Por qué es útil?**
+- Protege rutas privadas
+- Redirige automáticamente a login si no hay sesión
+
+### Navegación en Web
+
+#### 1. **useNavigate Hook** - Navegación programática
+
+```jsx
+import { useNavigate } from 'react-router-dom';
+
+const DashboardPage = () => {
+  const navigate = useNavigate();
+  
+  const handleLogout = () => {
+    // Limpiar sesión
+    logout();
+    
+    // Navegar a login
+    navigate('/login', { replace: true });
+    // replace: true → Reemplaza la entrada del historial (no se puede volver atrás)
+  };
+  
+  return (
+    <button onClick={handleLogout}>Cerrar Sesión</button>
+  );
+};
+```
+
+**Métodos de `navigate()`:**
+- `navigate('/dashboard')` → Navega a una ruta
+- `navigate('/dashboard', { replace: true })` → Reemplaza la entrada actual del historial
+- `navigate(-1)` → Va una página atrás
+- `navigate(1)` → Va una página adelante
+
+#### 2. **Link Component** - Navegación con enlaces
+
+```jsx
+import { Link } from 'react-router-dom';
+
+const Navigation = () => {
+  return (
+    <nav>
+      <Link to="/dashboard">Dashboard</Link>
+      <Link to="/services">Servicios</Link>
+      <Link to="/services/123">Servicio #123</Link>
+    </nav>
+  );
+};
+```
+
+**¿Qué hace?**
+- Crea un enlace que navega sin recargar la página
+- Equivalente a `<a href>` pero para React Router
+
+#### 3. **Navigate Component** - Redirección automática
+
+```jsx
+import { Navigate } from 'react-router-dom';
+
+const ProtectedRoute = ({ children }) => {
+  const { isAuthenticated } = useAuth();
+  
+  if (!isAuthenticated) {
+    // Redirige automáticamente a /login
+    return <Navigate to="/login" replace />;
+  }
+  
+  return children;
+};
+```
+
+**¿Cuándo usar?**
+- En componentes de protección de rutas
+- Para redirecciones condicionales
+
+### Parámetros de Ruta (URL Parameters)
+
+#### Obtener parámetros de la URL
+
+```jsx
+// Ruta: /services/:id
+// URL: /services/123
+
+import { useParams } from 'react-router-dom';
+
+const ServiceDetailPage = () => {
+  // Obtiene los parámetros de la URL
+  const { id } = useParams();
+  // id = "123"
+  
+  return <div>Servicio ID: {id}</div>;
+};
+```
+
+**Ejemplo del proyecto:**
+```jsx
+// apps/web/src/pages/ServiceDetailPage.jsx
+import { useParams } from 'react-router-dom';
+
+const ServiceDetailPage = () => {
+  const { id } = useParams(); // Obtiene el ID de la URL
+  
+  // Busca el servicio con ese ID
+  const service = services.find(s => s.id === id);
+  
+  return <div>{service.title}</div>;
+};
+```
+
+### Rutas Definidas en el Proyecto
+
+**Rutas Públicas:**
+- `/` → `LandingPage` (siempre accesible)
+- `/login` → `LoginPage` (solo si NO autenticado)
+- `/signup` → `SignUpPage` (solo si NO autenticado)
+
+**Rutas Protegidas:**
+- `/dashboard` → `DashboardPage` (dashboard según rol)
+- `/services/create` → `CreateServicePage` (crear servicio)
+- `/supplies/create` → `CreateSupplyOfferPage` (crear oferta de insumos)
+- `/services` → `ServicesListPage` (listado de servicios)
+- `/services/:id` → `ServiceDetailPage` (detalle de servicio)
+
+**Ruta 404:**
+- `/*` → `NotFoundPage` (cualquier URL no reconocida)
+
+### Flujo de Navegación en Web
+
+```
+1. Usuario escribe URL: /dashboard
+   ↓
+2. BrowserRouter detecta el cambio de URL
+   ↓
+3. Routes busca una coincidencia con las rutas definidas
+   ↓
+4. Encuentra: <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+   ↓
+5. ProtectedRoute verifica autenticación
+   ↓
+6a. Si NO autenticado → <Navigate to="/login" /> (redirige)
+6b. Si autenticado → Renderiza <DashboardPage />
+   ↓
+7. DashboardPage se renderiza y muestra el contenido
+```
+
+---
+
+## 📱 Manejo de Rutas en Mobile (React Navigation)
+
+### ¿Qué es React Navigation?
+
+**React Navigation** es la librería estándar para manejar navegación en aplicaciones React Native. A diferencia de web (basado en URLs), mobile usa un **Stack Navigator** (pila de pantallas).
+
+### Concepto: Stack Navigator
+
+**Stack Navigator** funciona como una pila de cartas (LIFO - Last In, First Out):
+- **Push**: Agregar una pantalla encima (navegar hacia adelante)
+- **Pop**: Quitar la pantalla superior (volver atrás)
+- **Replace**: Reemplazar la pantalla actual (no se puede volver atrás)
+
+**¿Por qué se llama "Stack"?**
+Porque funciona exactamente como una estructura de datos "pila" (stack):
+- Solo puedes ver/operar con la pantalla superior
+- Para ver una pantalla anterior, debes quitar las que están encima
+- Las pantallas se apilan en orden (la última en entrar es la primera en salir)
+
+```
+Stack de Pantallas (como una pila de cartas):
+┌─────────────┐
+│ ServiceDetail│ ← Pantalla actual (top) - Última en entrar
+├─────────────┤
+│ ServiceList │ ← Segunda pantalla
+├─────────────┤
+│  Dashboard  │ ← Primera pantalla (base del stack)
+└─────────────┘
+
+Operaciones:
+- navigate('ServiceDetail') → Agrega ServiceDetail al top (push)
+- goBack() → Quita ServiceDetail del top (pop)
+- replace('Login') → Reemplaza ServiceDetail con Login
+```
+
+### Componentes Principales de React Navigation
+
+#### 1. **NavigationContainer**
+Proporciona el contexto de navegación a toda la app.
+
+```jsx
+// apps/mobile/App.jsx
+import { NavigationContainer } from '@react-navigation/native';
+
+<NavigationContainer>
+  {/* Todas las pantallas van aquí */}
+</NavigationContainer>
+```
+
+**Equivalente a:** `BrowserRouter` en React Router (web)
+
+#### 2. **createNativeStackNavigator**
+Crea un Stack Navigator (pila de pantallas).
+
+```jsx
+// apps/mobile/App.jsx
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
+// Crear el Stack Navigator
+const Stack = createNativeStackNavigator();
+
+// Usar el Stack Navigator
+<Stack.Navigator 
+  initialRouteName="Login"  // Pantalla inicial
+  screenOptions={{ headerShown: false }}  // Ocultar header por defecto
+>
+  <Stack.Screen name="Login" component={LoginScreen} />
+  <Stack.Screen name="Dashboard" component={DashboardRouter} />
+  <Stack.Screen name="ServiceForm" component={ServiceFormScreen} />
+  <Stack.Screen name="ServiceList" component={ServiceListScreen} />
+  <Stack.Screen name="ServiceDetail" component={ServiceDetailScreen} />
+  <Stack.Screen name="QuoteForm" component={QuoteFormScreen} />
+  <Stack.Screen name="SupplyOfferForm" component={SupplyOfferFormScreen} />
+</Stack.Navigator>
+```
+
+**Estructura:**
+- `Stack.Navigator`: Contenedor de todas las pantallas
+- `Stack.Screen`: Define una pantalla individual
+- `name`: Nombre único de la pantalla (usado para navegar)
+- `component`: El componente de la pantalla
+- `initialRouteName`: Pantalla que se muestra al iniciar
+
+### Pantallas Definidas en el Proyecto
+
+```jsx
+// apps/mobile/App.jsx - AppNavigator
+<Stack.Navigator initialRouteName={currentUser ? "Dashboard" : "Login"}>
+  {/* Pantalla de Login - Primera si no estás autenticado */}
+  <Stack.Screen name="Login" component={LoginScreen} />
+  
+  {/* Dashboard Router - Muestra dashboard según rol */}
+  <Stack.Screen name="Dashboard" component={DashboardRouter} />
+  
+  {/* Crear nuevo servicio (Rol: Solicitante) */}
+  <Stack.Screen name="ServiceForm" component={ServiceFormScreen} />
+  
+  {/* Lista de servicios (Rol: Proveedor de Servicio) */}
+  <Stack.Screen name="ServiceList" component={ServiceListScreen} />
+  
+  {/* Detalle de servicio (todos los roles) */}
+  <Stack.Screen name="ServiceDetail" component={ServiceDetailScreen} />
+  
+  {/* Formulario de cotización (Rol: Proveedor de Servicio) */}
+  <Stack.Screen name="QuoteForm" component={QuoteFormScreen} />
+  
+  {/* Formulario de oferta de insumos (Rol: Proveedor de Insumos) */}
+  <Stack.Screen name="SupplyOfferForm" component={SupplyOfferFormScreen} />
+</Stack.Navigator>
+```
+
+### Navegación en Mobile
+
+#### 1. **navigation.navigate()** - Navegar a una pantalla
+
+```jsx
+// apps/mobile/src/screens/SolicitanteDashboard.jsx
+const SolicitanteDashboard = ({ navigation }) => {
+  const handleCreateService = () => {
+    // Navega a ServiceForm
+    navigation.navigate('ServiceForm');
+  };
+  
+  return (
+    <TouchableOpacity onPress={handleCreateService}>
+      <Text>Crear Servicio</Text>
+    </TouchableOpacity>
+  );
+};
+```
+
+**¿Qué hace?**
+- Agrega una nueva pantalla al stack
+- Puedes volver atrás con el botón "atrás" del dispositivo
+
+#### 2. **navigation.navigate() con parámetros** - Pasar datos
+
+```jsx
+// apps/mobile/src/screens/ServiceListScreen.jsx
+const ServiceListScreen = ({ navigation }) => {
+  const handleServicePress = (serviceId) => {
+    // Navega a ServiceDetail y pasa el serviceId como parámetro
+    navigation.navigate('ServiceDetail', { serviceId: serviceId });
+  };
+  
+  return (
+    <TouchableOpacity onPress={() => handleServicePress(service.id)}>
+      <Text>{service.title}</Text>
+    </TouchableOpacity>
+  );
+};
+```
+
+**Recibir parámetros:**
+```jsx
+// apps/mobile/src/screens/ServiceDetailScreen.jsx
+const ServiceDetailScreen = ({ route, navigation }) => {
+  // Obtiene los parámetros pasados en navigation.navigate()
+  const { serviceId } = route.params;
+  // serviceId = el valor pasado en navigation.navigate('ServiceDetail', { serviceId: ... })
+  
+  return <Text>Servicio ID: {serviceId}</Text>;
+};
+```
+
+#### 3. **navigation.replace()** - Reemplazar pantalla actual
+
+```jsx
+// apps/mobile/src/screens/LoginScreen.jsx
+const LoginScreen = ({ navigation }) => {
+  useEffect(() => {
+    if (currentUser) {
+      // Reemplaza Login con Dashboard (no se puede volver atrás)
+      navigation.replace('Dashboard');
+    }
+  }, [currentUser]);
+  
+  // ...
+};
+```
+
+**¿Cuándo usar?**
+- Después de login (no tiene sentido volver a Login)
+- Después de logout (no tiene sentido volver al Dashboard)
+- Cuando quieres "resetear" el stack de navegación
+
+**Ejemplo del proyecto:**
+```jsx
+// apps/mobile/src/screens/DashboardRouter.jsx
+const handleLogout = () => {
+  dispatch({ type: 'SET_CURRENT_USER', payload: null });
+  // Reemplaza Dashboard con Login
+  navigation.replace('Login');
+};
+```
+
+#### 4. **navigation.goBack()** - Volver atrás
+
+```jsx
+// apps/mobile/src/screens/ServiceDetailScreen.jsx
+const ServiceDetailScreen = ({ navigation }) => {
+  return (
+    <TouchableOpacity onPress={() => navigation.goBack()}>
+      <Text>Volver</Text>
+    </TouchableOpacity>
+  );
+};
+```
+
+**¿Qué hace?**
+- Quita la pantalla actual del stack
+- Vuelve a la pantalla anterior
+
+### Ejemplos de Navegación en el Proyecto
+
+#### Ejemplo 1: Navegar desde Dashboard a ServiceForm
+
+```jsx
+// apps/mobile/src/screens/SolicitanteDashboard.jsx
+const SolicitanteDashboard = ({ navigation }) => {
+  const handleCreateService = () => {
+    // Navega a ServiceForm
+    navigation.navigate('ServiceForm');
+  };
+  
+  return (
+    <TouchableOpacity onPress={handleCreateService}>
+      <Text>Crear Nuevo Servicio</Text>
+    </TouchableOpacity>
+  );
+};
+```
+
+**Flujo:**
+```
+Dashboard → [navigate('ServiceForm')] → ServiceForm
+```
+
+#### Ejemplo 2: Navegar con parámetros
+
+```jsx
+// apps/mobile/src/screens/ServiceListScreen.jsx
+const ServiceListScreen = ({ navigation }) => {
+  const handleServicePress = (service) => {
+    // Navega a ServiceDetail y pasa el servicio completo
+    navigation.navigate('ServiceDetail', { 
+      serviceId: service.id,
+      service: service  // Pasa el objeto completo
+    });
+  };
+  
+  return (
+    <TouchableOpacity onPress={() => handleServicePress(service)}>
+      <Text>{service.title}</Text>
+    </TouchableOpacity>
+  );
+};
+```
+
+**Recibir en ServiceDetail:**
+```jsx
+// apps/mobile/src/screens/ServiceDetailScreen.jsx
+const ServiceDetailScreen = ({ route, navigation }) => {
+  const { serviceId, service } = route.params;
+  
+  return <Text>{service.title}</Text>;
+};
+```
+
+#### Ejemplo 3: Navegación después de Login
+
+```jsx
+// apps/mobile/src/screens/LoginScreen.jsx
+const LoginScreen = ({ navigation }) => {
+  const handleLogin = async () => {
+    const user = await login(email, password);
+    
+    if (user) {
+      // Reemplaza Login con Dashboard
+      navigation.replace('Dashboard');
+    }
+  };
+  
+  // También redirige automáticamente si ya estás autenticado
+  useEffect(() => {
+    if (currentUser) {
+      navigation.replace('Dashboard');
+    }
+  }, [currentUser]);
+  
+  // ...
+};
+```
+
+### Pantalla Inicial Dinámica
+
+```jsx
+// apps/mobile/App.jsx - AppNavigator
+function AppNavigator() {
+  const { state } = useAppState();
+  const currentUser = state.currentUser;
+  
+  return (
+    <NavigationContainer>
+      <Stack.Navigator 
+        // Pantalla inicial según autenticación
+        initialRouteName={currentUser ? "Dashboard" : "Login"}
+      >
+        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="Dashboard" component={DashboardRouter} />
+        {/* ... más pantallas ... */}
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
+```
+
+**¿Cómo funciona?**
+- Si `currentUser` existe → Pantalla inicial: `Dashboard`
+- Si `currentUser` es `null` → Pantalla inicial: `Login`
+
+### Flujo de Navegación en Mobile
+
+```
+1. App inicia
+   ↓
+2. AppNavigator verifica currentUser
+   ↓
+3a. Si NO autenticado → initialRouteName="Login"
+3b. Si autenticado → initialRouteName="Dashboard"
+   ↓
+4. Stack Navigator muestra la pantalla inicial
+   ↓
+5. Usuario interactúa (ej: presiona botón)
+   ↓
+6. navigation.navigate('ServiceForm') se ejecuta
+   ↓
+7. Stack Navigator agrega ServiceForm al stack
+   ↓
+8. ServiceForm se muestra (puede volver atrás)
+```
+
+### Comparación: Navegación Web vs Mobile
+
+| Acción | Web (React Router) | Mobile (React Navigation) |
+|--------|-------------------|---------------------------|
+| **Navegar a una ruta** | `navigate('/dashboard')` | `navigation.navigate('Dashboard')` |
+| **Reemplazar ruta actual** | `navigate('/login', { replace: true })` | `navigation.replace('Login')` |
+| **Volver atrás** | `navigate(-1)` o botón del navegador | `navigation.goBack()` |
+| **Pasar parámetros** | `navigate('/services/123')` (en URL) | `navigation.navigate('ServiceDetail', { serviceId: 123 })` |
+| **Obtener parámetros** | `const { id } = useParams()` | `const { serviceId } = route.params` |
+| **Verificar ruta actual** | `useLocation().pathname` | `navigation.getState()` |
+
+### Resumen: Manejo de Rutas
+
+**Web (React Router):**
+- Basado en URLs del navegador
+- Usa `BrowserRouter`, `Routes`, `Route`
+- Navegación con `useNavigate()`, `<Link>`, `<Navigate>`
+- Rutas protegidas con `<ProtectedRoute>` wrapper
+- Parámetros en URL: `/services/:id`
+
+**Mobile (React Navigation):**
+- Basado en Stack Navigator (pila de pantallas)
+- Usa `NavigationContainer`, `Stack.Navigator`, `Stack.Screen`
+- Navegación con `navigation.navigate()`, `navigation.replace()`, `navigation.goBack()`
+- Rutas protegidas con `initialRouteName` condicional
+- Parámetros pasados como objeto: `navigation.navigate('Screen', { param: value })`
 
 ---
 
