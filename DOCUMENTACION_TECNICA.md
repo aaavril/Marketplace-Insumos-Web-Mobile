@@ -21,6 +21,10 @@
 13. [Proceso de Autenticación](#proceso-de-autenticación)
 14. [Manejo de Rutas: Web y Mobile](#manejo-de-rutas-web-y-mobile)
 15. [Flujo de Datos en la Aplicación](#flujo-de-datos-en-la-aplicación)
+16. [Persistencia de Cotizaciones y Datos Clave](#persistencia-de-cotizaciones-y-datos-clave)
+17. [Retos y Lecciones del Desarrollo](#retos-y-lecciones-del-desarrollo)
+18. [Componente Destacado: QuoteComparator](#componente-destacado-quotecomparator)
+19. [Checklist de Conceptos Solicitados](#checklist-de-conceptos-solicitados)
 
 ---
 
@@ -3460,6 +3464,226 @@ const SolicitanteDashboard = () => {
    ↓
 9. DashboardPage → Renderiza según rol
 ```
+
+---
+
+## 🗂️ Persistencia de Cotizaciones y Datos Clave
+
+### Estructura base en el estado global
+
+Las cotizaciones viven en **dos niveles** dentro del estado administrado por `GlobalStateContext`:
+
+```58:64:packages/core-logic/src/data/initialState.js
+export const initialState = {
+  services: MOCK_SERVICES,
+  users: MOCK_USERS,
+  currentUser: null,
+  quotes: [],
+  supplyOffers: MOCK_SUPPLY_OFFERS
+};
+```
+
+- Cada servicio (`state.services[n]`) contiene su propio arreglo `service.quotes`.
+- `state.quotes` mantiene una lista plana para facilitar vistas globales (ej: dashboard del proveedor).
+- En web la persistencia es en memoria; el usuario autenticado se guarda en `localStorage`, pero las cotizaciones viven en el contexto hasta que exista un backend real.
+
+### Ciclo de vida de una cotización (crear, editar, eliminar)
+
+```61:139:packages/core-logic/src/context/AppReducer.js
+case 'ADD_QUOTE':
+  return {
+    ...state,
+    services: state.services.map(service =>
+      service.id === action.payload.serviceId
+        ? {
+            ...service,
+            quotes: [...(service.quotes || []), action.payload.quote]
+          }
+        : service
+    ),
+    quotes: [...state.quotes, action.payload.quote]
+  };
+
+case 'UPDATE_QUOTE': {
+  const { serviceId, quoteId, quote } = action.payload;
+  return {
+    ...state,
+    services: state.services.map(service =>
+      service.id === serviceId
+        ? {
+            ...service,
+            quotes: service.quotes?.map(q =>
+              q.id === quoteId ? { ...q, ...quote } : q
+            ) || []
+          }
+        : service
+    ),
+    quotes: state.quotes.map(q =>
+      q.id === quoteId ? { ...q, ...quote } : q
+    )
+  };
+}
+
+case 'DELETE_QUOTE': {
+  const { serviceId, quoteId } = action.payload;
+  return {
+    ...state,
+    services: state.services.map(service =>
+      service.id === serviceId
+        ? {
+            ...service,
+            quotes: service.quotes?.filter(q => q.id !== quoteId) || []
+          }
+        : service
+    ),
+    quotes: state.quotes.filter(q => q.id !== quoteId)
+  };
+}
+```
+
+- **Creación** (`ADD_QUOTE`): inserta la cotización dentro del servicio y la agrega al arreglo plano.
+- **Actualización** (`UPDATE_QUOTE`): sincroniza ambos lugares para evitar inconsistencias.
+- **Eliminación** (`DELETE_QUOTE`): limpia tanto el servicio como la colección global.
+
+### Datos semilla y shape de cada cotización
+
+```8:45:packages/core-logic/src/data/mockServices.js
+{
+  id: 's1',
+  title: 'Reparación de Techo y Fachada',
+  // ...
+  quotes: [
+    {
+      id: 'q1',
+      serviceId: 's1',
+      serviceProviderId: 'u2',
+      price: 1800,
+      deadline: '2024-02-25',
+      duration: 7,
+      notes: 'Incluye materiales y mano de obra. Garantía de 12 meses.',
+      createdAt: '2024-02-02T10:00:00.000Z'
+    },
+    // ...
+  ],
+  selectedQuoteId: null
+}
+```
+
+- Las propiedades mínimas son `id`, `serviceId`, `serviceProviderId`, `price` y `createdAt`.
+- `selectedQuoteId` en cada servicio permite marcar qué cotización ganó la licitación.
+
+### ¿Qué pantallas consumen la data?
+
+- `ServiceDetailPage` (web) deshabilita el comparador si no hay datos en `service.quotes`.
+
+```370:379:apps/web/src/pages/ServiceDetailPage.jsx
+{isSolicitante && (
+  <div className="quotes-section solicitante-view">
+    <div className="quotes-header">
+      <h2>Cotizaciones recibidas</h2>
+      <button
+        type="button"
+        className="btn-open-comparator"
+        onClick={handleOpenComparator}
+        disabled={!service.quotes || service.quotes.length === 0}
+      >
+        {service.status === 'En Evaluación' || showComparator
+          ? 'Revisar comparador'
+          : 'Comparar cotizaciones'}
+      </button>
+    </div>
+    {/* ... */}
+  </div>
+)}
+```
+
+- `ServiceDetailScreen` (mobile) replica el flujo y muestra chips con el conteo (`service.quotes?.length`).
+- `RoleDashboard` y `ProveedorServicioDashboard` filtran los servicios según `quote.serviceProviderId` para que cada proveedor vea solo sus envíos.
+
+📌 **Próximo paso a futuro:** mover estas estructuras a una API/DB y persistir cotizaciones reales. Mientras tanto, todo queda en memoria compartida por el contexto.
+
+---
+
+## 🚧 Retos y Lecciones del Desarrollo
+
+1. **Sincronizar tres roles con experiencias distintas.**  
+   - Se diseñaron dashboards específicos en `apps/web/src/components/RoleDashboard.jsx` y `apps/mobile/src/screens/DashboardRouter.jsx`.  
+   - Cada vista lee el mismo `state.services` pero filtra por rol, lo que obligó a pensar la estructura de datos con banderas (`status`, `selectedQuoteId`) comunes.
+
+2. **Compartir lógica entre Web y Mobile sin backend.**  
+   - Todo el dominio (contextos, reducer, mocks) vive en `packages/core-logic`.  
+   - El desafío fue configurar alias y Metro/Vite para que ambos consumidores importaran `@core-logic/...` sin romper bundlers, tema descrito en la autocrítica de arquitectura.
+
+3. **Persistencia parcial y consistencia.**  
+   - Solo el usuario se guarda en `localStorage` (web) o en el polyfill/AsyncStorage (mobile).  
+   - Para evitar pérdida de información sensible se documentó que las cotizaciones son mock y se actualizan únicamente en memoria hasta tener API.
+
+4. **Paridad de funcionalidades (Comparador de cotizaciones).**  
+   - Se replicó el componente `QuoteComparator` tanto en web como en mobile asegurando que el ordenamiento y la semántica fueran iguales para no generar discrepancias entre plataformas.
+
+Lección clave: **el diseño previo de las estructuras de estado ahorra bugs** cuando la aplicación crece o se sincroniza entre plataformas.
+
+---
+
+## 🧩 Componente Destacado: QuoteComparator
+
+El comparador es el núcleo del proceso de decisión del solicitante. Resume varios conceptos pedidos (props, hooks, comunicación padre ↔ hijo).
+
+```9:158:apps/web/src/components/QuoteComparator.jsx
+const QuoteComparator = ({
+  quotes = [],
+  getProviderName,
+  users = [],
+  onClose,
+  selectedQuoteId,
+  completedRatingLabel = null,
+  serviceStatus = '',
+}) => {
+  const [sortOption, setSortOption] = useState('price');
+
+  const sortedQuotes = useMemo(() => {
+    const list = [...quotes];
+    if (sortOption === 'duration') {
+      return list.sort((a, b) => getDurationValue(a) - getDurationValue(b));
+    }
+    return list.sort((a, b) => a.price - b.price);
+  }, [quotes, sortOption]);
+
+  const handleSortChange = (event) => {
+    setSortOption(event.target.value);
+  };
+
+  return (
+    <div className="quote-comparator">
+      {/* Tabla ordenada */}
+    </div>
+  );
+};
+```
+
+Aspectos relevantes:
+
+- **Props**: recibe `quotes`, `selectedQuoteId`, callbacks (`onClose`) y funciones (`getProviderName`). Son enviadas por el padre `ServiceDetailPage`, cumpliendo la comunicación padre → hijo.
+- **Estado local (`useState`)**: `sortOption` guarda la métrica seleccionada por el usuario sin tocar el estado global.
+- **Memorización (`useMemo`)**: evita resortear la lista en cada render cuando ni `quotes` ni `sortOption` cambian, optimizando tablas largas.
+- **Render condicional**: muestra mensajes distintos si la lista está vacía, o si la cotización está seleccionada/completada.
+- **Extensibilidad**: el mismo shape de props permite portar la lógica al componente mobile (`apps/mobile/src/components/QuoteComparator.jsx`) reutilizando la misma semántica de orden y labels.
+
+---
+
+## 📌 Checklist de Conceptos Solicitados
+
+| Concepto | ¿Dónde se explica? | Recordatorio rápido |
+|----------|--------------------|---------------------|
+| JS/React Básico | [Conceptos Fundamentales](#conceptos-fundamentales-de-javascript-y-react) | Funciones flecha, destructuring, JSX como funciones que retornan UI. |
+| Ciclo de vida | [Ciclo de Vida de Componentes](#ciclo-de-vida-de-componentes) | Montaje/actualización/desmontaje y cómo `useEffect` reemplaza a los métodos de clase. |
+| Hooks (`useState`, `useEffect`) | [Hooks: useState y useEffect](#hooks-usestate-y-useeffect) | Ejemplos prácticos (contadores, carga de `localStorage`) e integración con Context. |
+| React Context | [React Context](#react-context) | Creación de Provider, jerarquía de `<GlobalStateProvider>` + `<AuthProvider>` y custom hooks (`useAppState`). |
+| Props padre ↔ hijo | [Props: Comunicación entre Componentes](#props-comunicación-entre-componentes) | Cómo pasar datos hacia abajo y funciones hacia arriba para que el hijo informe eventos al padre. |
+| Autenticación | [Proceso de Autenticación](#proceso-de-autenticación) | Flujo login → AuthService → reducer → `ProtectedRoute`, con persistencia en `localStorage`. |
+| React Native Routing vs Stack | [Manejo de Rutas: Web y Mobile](#manejo-de-rutas-web-y-mobile) y [React Native: Routing vs Stack](#react-native-routing-vs-stack-fiber-tree) | Diferencias entre `React Router` (URLs) y `createNativeStackNavigator` (pila de pantallas). |
+
+Con estas referencias se cubren todos los puntos solicitados para la defensa y la documentación técnica.
 
 ---
 
