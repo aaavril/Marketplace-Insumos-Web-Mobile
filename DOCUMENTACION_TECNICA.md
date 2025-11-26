@@ -2101,6 +2101,136 @@ export default function App() {
 - `App` puede usar ambos contextos
 - Los Providers se pueden anidar (uno dentro de otro)
 
+---
+
+## 🧠 Estado Global: initialState + GlobalStateContext + AuthContext + AppReducer
+
+Esta es la columna vertebral del proyecto: un `initialState` compartido, un `GlobalStateContext` que lo expone, un `AppReducer` que define qué puede cambiar y un `AuthContext` que se apoya en todo lo anterior para manejar sesión y roles.
+
+### 1. `initialState`: snapshot único del dominio
+
+```58:64:packages/core-logic/src/data/initialState.js
+export const initialState = {
+  services: MOCK_SERVICES,
+  users: MOCK_USERS,
+  currentUser: null,
+  quotes: [],
+  supplyOffers: MOCK_SUPPLY_OFFERS
+};
+```
+
+- Arranca el reducer con datos mock (servicios, usuarios, insumos) y deja preparado el espacio para `currentUser` y `quotes`.
+- Tanto web como mobile importan exactamente el mismo objeto porque `initialState` vive en `packages/core-logic`.
+
+### 2. `GlobalStateContext`: expone `{ state, dispatch }`
+
+```1:32:packages/core-logic/src/context/GlobalStateContext.jsx
+export const StateContext = createContext(undefined);
+
+export const GlobalStateProvider = ({ children }) => {
+  const [state, dispatch] = useReducer(AppReducer, initialState);
+  const value = { state, dispatch };
+
+  return (
+    <StateContext.Provider value={value}>
+      {children}
+    </StateContext.Provider>
+  );
+};
+
+export const useAppState = () => {
+  const context = useContext(StateContext);
+  if (!context) throw new Error('useAppState debe usarse dentro de GlobalStateProvider');
+  return context;
+};
+```
+
+- `useReducer` recibe el `initialState` y el `AppReducer` para asegurar que cualquier mutación pase por el mismo embudo.
+- `useAppState()` es el hook que usan dashboards, formularios, etc. para leer (`state`) y disparar acciones (`dispatch`).
+
+### 3. `AppReducer`: reglas de negocio centralizadas
+
+```58:139:packages/core-logic/src/context/AppReducer.js
+case 'ADD_QUOTE':
+  return {
+    ...state,
+    services: state.services.map(service =>
+      service.id === action.payload.serviceId
+        ? {
+            ...service,
+            quotes: [...(service.quotes || []), action.payload.quote]
+          }
+        : service
+    ),
+    quotes: [...state.quotes, action.payload.quote]
+  };
+```
+
+- Cada `case` describe exactamente cómo cambia el estado ante una acción (`ADD_SERVICE`, `UPDATE_SERVICE_STATUS`, `ADD_SUPPLY_OFFER`, etc.).
+- El reducer siempre devuelve **copias inmutables**; esto permite que React detecte el cambio y re-renderice solo lo necesario.
+- Como el reducer vive en `packages/core-logic`, ambos clientes comparten las mismas reglas de negocio.
+
+### 4. `AuthContext`: pegamento entre sesión y estado global
+
+```1999:2053:packages/core-logic/src/context/AuthContext.jsx
+export const AuthProvider = ({ children }) => {
+  const { state, dispatch } = useAppState();
+  const [authLoading, setAuthLoading] = useState(false);
+
+  const login = async (email, password) => {
+    setAuthLoading(true);
+    const userData = await authLogin(email, password);
+    localStorage.setItem('currentUser', JSON.stringify(userData));
+    dispatch({ type: 'SET_CURRENT_USER', payload: userData });
+    setAuthLoading(false);
+    return userData;
+  };
+
+  const logout = async () => {
+    await authLogout();
+    localStorage.removeItem('currentUser');
+    dispatch({ type: 'LOGOUT' });
+  };
+
+  useEffect(() => {
+    const savedUser = localStorage.getItem('currentUser');
+    if (savedUser) {
+      dispatch({ type: 'SET_CURRENT_USER', payload: JSON.parse(savedUser) });
+    }
+  }, [dispatch]);
+
+  return (
+    <AuthContext.Provider value={{
+      user: state.currentUser,
+      loading: authLoading,
+      login,
+      logout,
+      isAuthenticated: !!state.currentUser
+    }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+```
+
+- Consume `useAppState()` para leer `currentUser` y despachar acciones (`SET_CURRENT_USER`, `LOGOUT`).
+- Sincroniza el estado global con almacenamiento local (web) al montar el provider; en mobile el polyfill imita esta lógica.
+- Expone el hook `useAuth()` para componentes como `Login`, `ProtectedRoute` o `DashboardPage`.
+
+### 5. Flujo completo (ejemplo login)
+
+1. `Login.jsx` llama `const { login } = useAuth(); await login(email, pass);`
+2. `AuthContext.login` utiliza `AuthService`, guarda el usuario en `localStorage` y hace `dispatch({ type: 'SET_CURRENT_USER', payload: user })`.
+3. `AppReducer` procesa `SET_CURRENT_USER` y devuelve un nuevo `state` con `currentUser` poblado.
+4. Cualquier componente que llame `useAppState()` recibe el usuario actualizado (ej. `RoleDashboard` decide qué dashboard mostrar).
+
+Este patrón (Provider + Reducer + Estado inicial) garantiza que:
+- **Solo haya una fuente de la verdad** para todo el dominio.
+- **Cualquier mutación esté auditada** por el `AppReducer`.
+- **Los componentes sean simples consumidores**: leen con `state`, escriben con `dispatch`, o usan `useAuth()` si necesitan lógica propia de sesión.
+
+---
+
 ### Árbol de Componentes con Context
 
 ```
