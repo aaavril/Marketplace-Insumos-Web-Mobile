@@ -1,7 +1,7 @@
 /**
  * DashboardRouter.jsx - ROUTER DE DASHBOARDS SEGÚN ROL
  * 
- * Este componente implementa el control de acceso por rol (F1.HU3).
+ * Este componente implementa el control de acceso por rol.
  * Renderiza condicionalmente el dashboard correspondiente según el rol del usuario.
  * 
  * Equivalente a RoleDashboard en web, pero adaptado para React Native.
