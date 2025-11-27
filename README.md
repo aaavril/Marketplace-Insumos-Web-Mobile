@@ -284,36 +284,7 @@ export const initialState = {
 - **Contexto de autenticación**: `packages/core-logic/src/context/AuthContext.js` (web)
 - **Redirección automática**: Después de login exitoso, redirige al dashboard según el rol
 
-### 4. Arquitectura Monorepo
-
-**Decisión**: Usar **npm workspaces** para organizar el proyecto en un monorepo.
-
-**¿Por qué?**
-- **Código compartido**: La lógica de negocio está en `packages/core-logic` y se usa tanto en web como mobile
-- **Sin duplicación**: Si cambias la lógica de autenticación, se actualiza automáticamente en ambas plataformas
-- **Un solo `npm install`**: Instala todas las dependencias de todos los workspaces
-- **Mantenibilidad**: Un solo lugar para corregir bugs
-
-**Estructura**:
-```
-Marketplace-Insumos-Web-Mobile/
-├── apps/
-│   ├── web/          # Aplicación React Web (Vite)
-│   └── mobile/       # Aplicación React Native (Expo)
-├── packages/
-│   └── core-logic/   # Lógica compartida (Context, Services, Data)
-└── package.json      # Configuración del workspace raíz
-```
-
-**Dependencias compartidas**:
-- React 19.1.0 instalado en el root para evitar duplicaciones
-- `packages/core-logic` no tiene dependencias propias, solo las del root
-
-**Resolución de módulos**:
-- **Web**: Configurado en `apps/web/vite.config.js` con alias `@core-logic`
-- **Mobile**: Configurado en `apps/mobile/metro.config.js` para resolver módulos del workspace
-
-### 5. Build Tools
+### 4. Build Tools
 
 **Decisión**:
 - **Web**: Vite 7.1.7
@@ -411,13 +382,6 @@ npm run web      # Web (opcional)
 npm run lint     # Lint
 ```
 
-## 🔍 Testing y Desarrollo
-
-El proyecto incluye datos mock para facilitar el desarrollo y testing:
-- Servicios preconfigurados con cotizaciones
-- Usuarios con diferentes roles
-- Ofertas de insumos de ejemplo
-
 ## 🎬 Demo del Flujo Principal
 
 ### Flujo: Publicar Servicio → Recibir Cotización → Comparar → Seleccionar
@@ -474,38 +438,6 @@ Este flujo demuestra el ciclo completo del marketplace:
 3. Opcionalmente, valora al proveedor (1-5 estrellas)
 4. El estado cambia a "Completado"
 5. El rating del proveedor se actualiza
-
-### 📹 Videos / GIFs del Demo
-
-> **Nota**: Agrega aquí capturas de pantalla, GIFs o videos cortos mostrando:
-> - Login con diferentes usuarios
-> - Publicar un servicio
-> - Recibir una cotización
-> - Comparar cotizaciones
-> - Seleccionar una cotización
-> - Completar un servicio
-
-**Ejemplo de estructura para agregar**:
-```markdown
-### Demo Visual
-
-#### 1. Publicar Servicio
-![Publicar Servicio](demo/publicar-servicio.gif)
-
-#### 2. Recibir Cotización
-![Recibir Cotización](demo/recibir-cotizacion.gif)
-
-#### 3. Comparar y Seleccionar
-![Comparar y Seleccionar](demo/comparar-seleccionar.gif)
-```
-
-## 📝 Notas Adicionales
-
-- El proyecto utiliza **React 19.1.0** para ambas plataformas (web y mobile)
-- **Expo SDK ~54.0.25** para la aplicación mobile
-- **Vite 7.1.7** para el build tool de la aplicación web
-- **React Navigation 7.x** para navegación en mobile
-- **React Router DOM 7.x** para navegación en web
 
 ## 🐛 Problemas Conocidos
 
