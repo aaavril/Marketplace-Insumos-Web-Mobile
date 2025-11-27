@@ -8,7 +8,12 @@ import './QuoteForm.css';
  * F3.HU1: Permite ingresar precio total, plazo y notas.
  * Bloquea cotizaciones si el servicio está "Asignado" o "Completado"
  */
-const QuoteForm = ({ serviceId }) => {
+const QuoteForm = ({
+  serviceId,
+  editingQuote = null,
+  onSave = null,
+  onCancel = null
+}) => {
   const { state, dispatch } = useAppState();
   const { user } = useAuth();
 
@@ -59,6 +64,17 @@ const QuoteForm = ({ serviceId }) => {
     setNotes('');
     setDuration('');
   };
+
+  useEffect(() => {
+    if (editingQuote) {
+      setPrice(editingQuote.price?.toString() || '');
+      setDeadline(editingQuote.deadline || '');
+      setDuration(editingQuote.duration?.toString() || '');
+      setNotes(editingQuote.notes || '');
+    } else {
+      resetForm();
+    }
+  }, [editingQuote]);
 
   const handleSubmit = (event) => {
     event.preventDefault();
